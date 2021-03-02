@@ -1,0 +1,4824 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+        <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <title>OFF the line</title>
+        <link rel="stylesheet" type="text/css" href="styles.css">
+        <link rel="manifest" href="manifest.json">
+
+        <meta property="og:url" content="https://offtheline.jesusolmos.es/">
+        <meta name="twitter:site" content="@cino_power">
+        <meta name="twitter:creator" content="@cino_power">
+        <meta property="og:title" content="OFF the line">
+        <meta name="twitter:title" content="OFF the line">
+        <meta property="og:image" content="https://offtheline.jesusolmos.es/icon-512x512.png">
+        <meta name="twitter:image" content="https://offtheline.jesusolmos.es/icon-512x512.png">
+
+    </head>
+    
+    <body>
+        <div id="o_t_l">
+            <canvas id="canvas" width="840" height="600"></canvas>
+            <canvas id="c_m" width="100%" height="200"></canvas>
+            <a href="#" id="p_a"></a>
+            <div id="cn_m">
+                <span class="t_m" id="u_m"></span>
+                <span class="t_m" id="i_m"></span>
+                <span class="t_m" id="d_m"></span>
+                <span class="t_m" id="dw_m"></span>
+                <span class="t_m" id="ar_m"></span>
+                <span class="t_m" id="ac_m"></span>
+            </div>
+        </div>
+        <script>//This is the "Offline copy of pages" service worker
+
+//Add this below content to your HTML page, or add the js file to your page at the very top to register service worker
+if (navigator.serviceWorker.controller) {
+  console.log('[PWA Builder] active service worker found, no need to register')
+} else {
+  //Register the ServiceWorker
+  navigator.serviceWorker.register('pwabuilder-sw.js', {
+    scope: './'
+  }).then(function(reg) {
+    console.log('Service worker has been registered for scope:'+ reg.scope);
+  });
+}</script>
+        <script>// stats.js - http://github.com/mrdoob/stats.js
+(function(f,e){"object"===typeof exports&&"undefined"!==typeof module?module.exports=e():"function"===typeof define&&define.amd?define(e):f.Stats=e()})(this,function(){var f=function(){function e(a){c.appendChild(a.dom);return a}function u(a){for(var d=0;d<c.children.length;d++)c.children[d].style.display=d===a?"block":"none";l=a}var l=0,c=document.createElement("div");c.style.cssText="position:fixed;top:0;left:0;cursor:pointer;opacity:0.9;z-index:10000";c.addEventListener("click",function(a){a.preventDefault();
+    u(++l%c.children.length)},!1);var k=(performance||Date).now(),g=k,a=0,r=e(new f.Panel("FPS","#0ff","#002")),h=e(new f.Panel("MS","#0f0","#020"));if(self.performance&&self.performance.memory)var t=e(new f.Panel("MB","#f08","#201"));u(0);return{REVISION:16,dom:c,addPanel:e,showPanel:u,begin:function(){k=(performance||Date).now()},end:function(){a++;var c=(performance||Date).now();h.update(c-k,200);if(c>g+1E3&&(r.update(1E3*a/(c-g),100),g=c,a=0,t)){var d=performance.memory;t.update(d.usedJSHeapSize/
+    1048576,d.jsHeapSizeLimit/1048576)}return c},update:function(){k=this.end()},domElement:c,setMode:u}};f.Panel=function(e,f,l){var c=Infinity,k=0,g=Math.round,a=g(w.devicePixelRatio||1),r=80*a,h=48*a,t=3*a,v=2*a,d=3*a,m=15*a,n=74*a,p=30*a,q=document.createElement("canvas");q.width=r;q.height=h;q.style.cssText="width:80px;height:48px";var b=q.getContext("2d");b.font="bold "+9*a+"px Helvetica,Arial,sans-serif";b.textBaseline="top";b.fillStyle=l;b.fillRect(0,0,r,h);b.fillStyle=f;b.fillText(e,t,v);
+    b.fillRect(d,m,n,p);b.fillStyle=l;b.globalAlpha=.9;b.fillRect(d,m,n,p);return{dom:q,update:function(h,w){c=Math.min(c,h);k=Math.max(k,h);b.fillStyle=l;b.globalAlpha=1;b.fillRect(0,0,r,m);b.fillStyle=f;b.fillText(g(h)+" "+e+" ("+g(c)+"-"+g(k)+")",t,v);b.drawImage(q,d+a,m,n-a,p,d,m,n-a,p);b.fillRect(d+n-a,m,a,p);b.fillStyle=l;b.globalAlpha=.9;b.fillRect(d+n-a,m,a,g((1-h/w)*p))}}};return f});</script>
+        <script>
+
+/**************************************************
+** ENGINE CLASS
+**************************************************/
+var Engine = function(juego, mobile) {
+
+    juego.counter_ = 0; 
+
+    
+
+    this.dt = 0;
+    this.now_,
+    this.last = juego.timestamp_();
+    this.then_ = juego.timestamp_();
+
+    this.frame_ = function(){
+
+        //debug start
+        //w.stats.begin();
+
+
+        mobile.controla_if_mobile_();
+
+        if(w.innerWidth < 820){
+            juego.ancho_total_ = w.innerWidth * 2,
+            juego.alto_total_  = w.innerHeight * 2;
+
+        }
+        else{
+            juego.ancho_total_ = w.innerWidth,
+            juego.alto_total_  = w.innerHeight;
+        }
+        
+        juego.canvas_.width  = juego.ancho_total_;
+        juego.canvas_.height = juego.alto_total_;
+
+        if(!juego.empezado_){
+            juego.muestra_menu_(juego.ctx_, juego.modo_seleccionado_);
+            requestAnimationFrame(this.frame_.bind(this));
+            return;
+        }
+        if(juego.pausa_){
+            requestAnimationFrame(this.frame_.bind(this));
+            return;
+        }
+
+        this.now_ = juego.timestamp_();
+        
+        this.dt = this.dt + Math.min(1, (this.now_ - this.last) / 1000);
+
+        while(this.dt > juego.step_) {
+            this.dt = this.dt - juego.step_;
+
+            var elapsed = this.now_ - this.then_;
+    
+            if (elapsed > juego.fpsInterval_) {
+                juego.update_(juego.step_);
+            }
+            
+            this.then_ = this.now_ - (elapsed % juego.fpsInterval_);
+            this.last = this.now_;
+        }
+
+
+        juego.pre_shake_();
+        juego.render(juego.ctx_, juego.counter_, this.dt);
+        juego.post_shake_();
+        
+        juego.counter_++;
+        
+        //debug start
+        //w.stats.end();
+
+        requestAnimationFrame(this.frame_.bind(this), canvas);
+    }   
+}</script>
+        <script>
+
+/**************************************************
+** MUSIC CLASS
+**************************************************/
+var Music = function(juego, mobile, engine) {
+    
+    this.arranca_ = function(){
+         /* Musica */
+
+        //Una instancia del player por cada sonido
+        var music_player = new CPlayer();
+        var flag_song = false;
+        music_player.init(song);
+
+
+        var ataque_player = new CPlayer();
+        ataque_player.init(ataque);
+        var flag_ataque = false;
+        w.ataque_audio_;
+
+        
+        var bloqueo_player = new CPlayer();
+        bloqueo_player.init(bloqueo);
+        var flag_bloqueo = false;
+        w.bloqueo_audio_;
+
+        
+        var ostia_player = new CPlayer();
+        ostia_player.init(ostia);
+        var flag_ostia = false;
+        w.ostia_audio_;
+        
+        var ostia_final_player = new CPlayer();
+        ostia_final_player.init(ostia_final);
+        var flag_ostia_final = false;
+        w.ostia_final_audio_;
+        
+        var sirena_player = new CPlayer();
+        sirena_player.init(sirena);
+        var flag_sirena = false;
+        w.sirena_audio_;
+        
+        var viento_player = new CPlayer();
+        viento_player.init(viento);
+        var flag_viento = false;
+        w.viento_audio_;
+        
+        var menu_player = new CPlayer();
+        menu_player.init(menu);
+        var flag_menu = false;
+        w.menu_audio_;
+        
+        var menu_ok_player = new CPlayer();
+        menu_ok_player.init(menu_ok);
+        var flag_menu_ok = false;
+        w.menu_ok_audio_;
+
+
+        var done = false;
+        var intervalo_cancion = setInterval(function () {
+
+            
+
+            if (done) {
+                //Cuando todo esta cargado inicio el asunto...
+
+                //Pinto el meni
+                juego.muestra_menu_(juego.ctx_, false);
+
+                //Y empieza el ciclo del juego
+                engine.frame_();
+                
+                //Limpio este intervalo para no dejar cosas sueltas
+                clearInterval(intervalo_cancion);
+                return;
+            }
+
+            if(!flag_song){
+                var music_percent = music_player.generate();
+                juego.pinta_cargador_(music_percent, juego.ctx_);
+                if(music_percent >= 1){
+                    flag_song = true;
+                }
+            }
+
+            if(!flag_bloqueo){
+                if(bloqueo_player.generate() >= 1){
+                    flag_bloqueo = true;
+                }
+            }
+            
+            if(!flag_ataque){
+                if(ataque_player.generate() >= 1){
+                    flag_ataque = true;
+                }
+            }
+            
+            if(!flag_ostia){
+                if(ostia_player.generate() >= 1){
+                    flag_ostia = true;
+                }
+            }
+            
+            if(!flag_ostia_final){
+                if(ostia_final_player.generate() >= 1){
+                    flag_ostia_final = true;
+                }
+            }
+            
+            if(!flag_sirena){
+                if(sirena_player.generate() >= 1){
+                    flag_sirena = true;
+                }
+            }
+            
+            if(!flag_viento){
+                if(viento_player.generate() >= 1){
+                    flag_viento = true;
+                }
+            }
+            
+            if(!flag_menu){
+                if(menu_player.generate() >= 1){
+                    flag_menu = true;
+                }
+            }
+            
+            if(!flag_menu_ok){
+                if(menu_ok_player.generate() >= 1){
+                    flag_menu_ok = true;
+                }
+            }
+            
+            
+            
+
+            done = (flag_song && flag_bloqueo && flag_ataque && flag_ostia && flag_ostia_final && flag_sirena && flag_viento && flag_menu);
+
+            if (done) {
+
+                //Cuando todo esta OK y antes de limpiar este intervalo, genero un elemento de audio para cada sonido
+
+                var wave = music_player.createWave();
+                w.musica_principal = document.createElement("audio");
+                w.musica_principal.src = URL.createObjectURL(new Blob([wave], {type: "audio/wav"}));
+                w.musica_principal.loop=true;
+                w.musica_principal.volume = 0.1;
+                w.musica_principal.onplay = function() { 
+                    juego.musica_sonando_ = true;
+                };
+                w.musica_principal.play();
+
+                var wave2 = bloqueo_player.createWave();
+                w.bloqueo_audio_ = document.createElement("audio");
+                w.bloqueo_audio_.src = URL.createObjectURL(new Blob([wave2], {type: "audio/wav"}));
+                w.bloqueo_audio_.volume = 1;
+                
+                var wave3 = ataque_player.createWave();
+                w.ataque_audio_ = document.createElement("audio");
+                w.ataque_audio_.src = URL.createObjectURL(new Blob([wave3], {type: "audio/wav"}));
+                
+                var wave4 = ostia_player.createWave();
+                w.ostia_audio_ = document.createElement("audio");
+                w.ostia_audio_.src = URL.createObjectURL(new Blob([wave4], {type: "audio/wav"}));
+                
+                var wave5 = ostia_final_player.createWave();
+                w.ostia_final_audio_ = document.createElement("audio");
+                w.ostia_final_audio_.src = URL.createObjectURL(new Blob([wave5], {type: "audio/wav"}));
+                
+                var wave6 = sirena_player.createWave();
+                w.sirena_audio_ = document.createElement("audio");
+                w.sirena_audio_.src = URL.createObjectURL(new Blob([wave6], {type: "audio/wav"}));
+
+                
+                var wave7 = viento_player.createWave();
+                w.viento_audio_ = document.createElement("audio");
+                w.viento_audio_.src = URL.createObjectURL(new Blob([wave7], {type: "audio/wav"}));
+                
+                
+                var wave8 = menu_player.createWave();
+                w.menu_audio_ = document.createElement("audio");
+                w.menu_audio_.src = URL.createObjectURL(new Blob([wave8], {type: "audio/wav"}));
+                
+                
+                
+                var wave9 = menu_ok_player.createWave();
+                w.menu_ok_audio_ = document.createElement("audio");
+                w.menu_ok_audio_.src = URL.createObjectURL(new Blob([wave9], {type: "audio/wav"}));
+                
+            }
+        }, 40);
+    }
+}</script>
+        <script>
+
+/**************************************************
+** MOBILE CLASS
+**************************************************/
+var Mobile = function(juego) {
+
+
+    var self = this;
+
+  
+    this.pinta_cosas_mobile_ = function() {
+
+        this.c_m   = document.getElementById('c_m');
+        this.ctx_mobile_      = this.c_m.getContext('2d');
+        this.c_m.style.display = "block";
+        var ancho_w = w.innerWidth
+        this.c_m.width  = juego.ancho_total_;
+        this.c_m.height = 200;
+
+
+        
+        var flecha_arr=  [
+                    [  ,  , 1,  ,  ],
+                    [  , 1, 1, 1,  ],
+                    [ 1, 1, 1, 1, 1],
+                    [  , 1, 1, 1,  ],
+                    [  , 1, 1, 1,  ]
+            ];
+        var accion_boton=  [
+                    [ 1,  , 1,  , 1],
+                    [  , 1, 1, 1,  ],
+                    [ 1, 1, 1, 1, 1],
+                    [  , 1, 1, 1,  ],
+                    [ 1,  , 1,  , 1]
+            ];
+
+
+        var largo = w.innerHeight;
+        if(w.innerWidth>w.innerHeight){
+            largo = w.innerWidth;
+        }
+        var size_flecha_px = largo/80;
+
+        this.ctx_mobile_.clearRect(0, 0, juego.ancho_total_, 200);
+        juego.pinta_filas_columnas_(this.ctx_mobile_, 20, 105, juego.flecha_izq, size_flecha_px);
+        juego.pinta_filas_columnas_(this.ctx_mobile_, 95, 105, juego.flecha_der, size_flecha_px);
+        juego.pinta_filas_columnas_(this.ctx_mobile_, 52, 60, juego.flecha_arr, size_flecha_px);
+        juego.pinta_filas_columnas_(this.ctx_mobile_, 52, 160, juego.flecha_abj_, size_flecha_px);
+        juego.pinta_filas_columnas_(this.ctx_mobile_, ancho_w - 65 - size_flecha_px*10, 145, flecha_arr, size_flecha_px);
+        juego.pinta_filas_columnas_(this.ctx_mobile_, ancho_w - 20 -size_flecha_px*5, 145, accion_boton, size_flecha_px);
+
+        
+
+       
+          
+    }
+
+    this.mobile_listeners_ = function(){
+        
+        if(juego.is_touch_device_()){
+            document.getElementById('cn_m').style.display = "block";
+
+            document.getElementById('u_m').addEventListener('touchstart', function(e){
+                if(juego.empezado_){
+                    juego.player_.up = true;
+                }
+                this.className = "t_m pl";
+                e.preventDefault();
+            });
+            document.getElementById('dw_m').addEventListener('touchstart', function(e){
+                if(juego.empezado_){
+                    juego.player_.down = true;
+                }
+                this.className = "t_m pl";
+                e.preventDefault();
+            });
+            document.getElementById('d_m').addEventListener('touchstart', function(e){
+                if(juego.empezado_){
+                    juego.player_.right = true;
+                }
+                this.className = "t_m pl";
+                e.preventDefault();
+            });
+
+            document.getElementById('i_m').addEventListener('touchstart', function(e){ 
+                if(juego.empezado_){
+                    juego.player_.left = true;
+                }
+                this.className = "t_m pl";
+                e.preventDefault();
+            });
+
+            document.getElementById('ar_m').addEventListener('touchstart', function(e){
+                if(juego.empezado_){ 
+                    juego.player_.jump_ = true;
+                }
+                this.className = "t_m pl";
+                e.preventDefault();
+            });
+
+            document.getElementById('ac_m').addEventListener('touchstart', function(e){ 
+                if(!juego.musica_sonando_){
+                    w.musica_principal.play();
+                    juego.musica_sonando_ = true;
+                }
+                if(juego.empezado_){
+                    juego.player_.accion = true;
+                }
+                this.className = "t_m pl";
+                e.preventDefault();
+            });
+
+
+
+            document.getElementById('u_m').addEventListener('touchend', function(e){
+                if(!juego.empezado_){
+                    juego.mueve_selec_player_(false, "up");
+                }
+                else{
+                    juego.player_.up = false;
+                }
+                this.className = "t_m";
+                e.preventDefault();
+            });
+
+
+            document.getElementById('dw_m').addEventListener('touchend', function(e){
+                if(!juego.empezado_){
+                    juego.mueve_selec_player_(false, "down");
+                }
+                else{
+                    juego.player_.down = false;
+                }
+                this.className = "t_m";
+                e.preventDefault();
+            });
+
+
+            document.getElementById('d_m').addEventListener('touchend', function(e){
+                if(!juego.empezado_){
+                    juego.mueve_selec_player_(false, "right");
+                }
+                else{
+                    juego.player_.right = false;
+                }
+                this.className = "t_m";
+                e.preventDefault();
+            });
+
+            document.getElementById('i_m').addEventListener('touchend', function(e){ 
+                if(!juego.empezado_){
+                    juego.mueve_selec_player_(false, "left");
+                }
+                else{
+                    juego.player_.left = false;
+                }
+                this.className = "t_m";
+                e.preventDefault();
+            });
+
+            document.getElementById('ar_m').addEventListener('touchend', function(e){ 
+                
+                if(juego.empezado_){
+                    juego.player_.jump_ = false;
+                }
+                this.className = "t_m";
+                e.preventDefault();
+            });
+
+            document.getElementById('ac_m').addEventListener('touchend', function(e){ 
+                if(juego.empezado_){
+                    juego.player_.accion = false;
+                }
+                else{
+                    juego.selec_player_(false);
+                }
+                this.className = "t_m";
+                e.preventDefault();
+            });
+        }
+    }
+
+    
+    this.controla_if_mobile_ = function(){
+        if(juego.is_touch_device_()){
+            self.pinta_cosas_mobile_();
+        }
+    };
+
+}</script>
+        <script>
+/**************************************************
+** OSTIAZO CLASS
+**************************************************/
+var Ostiazo = function(x, y, que_ostia, block_size, color, x_translate, y_translate, izquierda, rotacion) {
+
+
+
+
+    this.x = x;
+    this.y = y;
+
+    this.x_translate_ = x_translate;
+    this.y_translate_ = y_translate;
+    this.izquierda_ = izquierda;
+    this.rotacion_ = rotacion;
+
+    this.ostiazos_ = [];
+    this.ostiazos_[0] = [
+        [ ,  ,  ,  ,  ,  , 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  , 1,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  , 1, 1,  , 1,  , 1,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1,  ],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ],
+        [ ,  ,  ,  ,  ,  , 1, 1, 1,  , 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+    ];
+    //parada
+    this.ostiazos_[1] = [
+        [ ,  ,  ,  ,  ,  ,  ,  , 1,  ,  ,  ,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1],
+        [1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1],
+        [1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1,  ],
+        [ , 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1,  ],
+        [ , 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1,  ,  ],
+        [ ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  , 1, 1, 1,  ,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1,  ,  ,  , 1, 1, 1,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ],
+    ];
+
+    this.que_ostia_ = this.ostiazos_[que_ostia];
+
+    this.block_size_ = block_size;
+
+    this.color_ = color;
+
+
+}</script>
+        <script>
+
+/**************************************************
+** GAME PLAYER CLASS
+**************************************************/
+var Player = function(juego, x, y, gravedad, impulso, player_num, cpu, tipo, bloque) {
+
+    this.x                 = x;
+    this.y                 = y;
+    if(bloque){
+        this.block_size_       = bloque;
+    }
+    else{
+        this.block_size_       = 4;
+    }
+    this.alto_             = this.block_size_ * 17;
+    this.ancho_            = this.block_size_ * 13;
+    this.dx                = 0;
+    this.dy                = 0;
+    
+    this.player_num_       = player_num;
+
+    this.wasleft_           = false;
+    this.wasright          = false;
+    this.gravity_          = gravedad*2;
+
+    this.rotacion_         = 0;
+
+    this.estoy_muerto_     = false;
+
+    
+
+    this.color_ = juego.COLOR_.YELLOW_;
+
+    this.tiempo_cambia_posicion_ = juego.timestamp_();
+    this.tiempo_next_ostiazo_ = juego.timestamp_();
+
+    /*
+
+    BLACK_: '#000000', 
+                      YELLOW_: '#ECD078', 
+                      BRICK_: '#D95B43', 
+                      PINK_: '#C02942', 
+                      PURPLE_: '#542437', 
+                      GREY_: '#333', 
+                      SLATE_: '#53777A', 
+                      GOLD_: 'gold'
+
+                      */
+
+    if(tipo){
+        this.tipo_ = tipo;
+    }
+    else{
+        this.tipo_ = 1;
+    }
+
+
+    this.maxdx_             = 250;
+    this.maxdy_             = 800;
+    this.pow_               = 12;
+    this.delay_ostiazo_     = 300;
+
+    this.cambia_tipo_ = function(tipo) {
+        switch (tipo){
+            case 2:
+                this.maxdx_             = 250 * 1.4;
+                this.maxdy_             = 800 * 1.4;
+                this.pow_               = 6;
+                this.delay_ostiazo_     = 200;
+                this.color_             = juego.COLOR_.PINK_;
+                break;
+            case 3:
+                this.maxdx_             = 250 * 2;
+                this.maxdy_             = 800 * 0.8;
+                this.pow_               = 8;
+                this.delay_ostiazo_     = 150;
+                this.color_             = juego.COLOR_.PURPLE_;
+                break;
+            case 4:
+                this.maxdx_             = 250 * 0.9;
+                this.maxdy_             = 800 * 0.7;
+                this.pow_               = 15;
+                this.delay_ostiazo_     = 500;
+                this.color_             = juego.COLOR_.GOLD_;
+                break;
+        }
+    }
+
+    this.cambia_tipo_(this.tipo_);
+
+    this.impulse_           = impulso;
+    this.accel_             = this.maxdx_ / (juego.ACCEL_);
+    this.friction_          = this.maxdx_ / (juego.FRICTION_);
+    this.tiempo_enfadado_   = juego.timestamp_();
+    this.tiempo_ostiazo_   = juego.timestamp_();
+    this.ostia_izquierda_   = false;
+    this.tiempo_bloqueo_   = juego.timestamp_();
+    
+    this.CPU_ = cpu;    
+
+    this.vida_inicial_      = 150;
+    if(cpu){
+        this.vida_inicial_      = 200;
+    }
+
+    this.vida_             = this.vida_inicial_;
+    this.izquierda_ = false;
+    
+
+
+    this.cabeza_ = [];
+    this.cabeza_[0] = [
+        [ , 1, 1, 1, ],
+        [1, 1, 1, 1, ],
+        [1,  , 1,  , ],
+        [1, 1, 1,  , ],
+        [1, 1,  ,  , ],
+    ];
+
+    this.cabeza_[1] = [
+        [ , 1, 1, 1, ],
+        [1,  , 1, 1, ],
+        [1,  , 1,  , ],
+        [1, 1, 1,  , ],
+        [1, 1,  ,  , ],
+    ];
+
+    this.cuerpo_ = [];
+    this.cuerpo_["up"] = [];
+    this.cuerpo_["middle"] = [];
+    this.cuerpo_["down"] = [];
+    this.cuerpo_["golpe"] = [];
+    this.cuerpo_["saltando"] = [];
+    this.cuerpo_["up"][0] = [
+        [ ,  ,  , 1, 1, 1, 1, 1,  , 1,  ,  ,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1, 1,  , 1,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  , 1,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+    ];
+    this.cuerpo_["up"][1] = [
+        [ ,  ,  , 1, 1, 1, 1, 1, 1,  ,  , 1,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1,  , 1, 1,  ,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+    ];
+    this.cuerpo_["up"][2] = [
+        [ ,  ,  , 1, 1, 1, 1, 1, 1, 1,  ,  ,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1,  ,  , 1, 1,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1, 1, 1,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  , 1, 1,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+    ];
+    this.cuerpo_["up"][3] = [
+        [ ,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  , 1, 1,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+    ];
+
+
+    this.cuerpo_["middle"][0] = [
+        [ ,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  , 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ],
+        [1, 1,  ,  , 1, 1, 1, 1,  , 1, 1,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  , 1, 1],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+    ];
+    this.cuerpo_["middle"][1] = [
+        [ ,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  , 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ],
+        [ ,  , 1,  , 1, 1, 1, 1,  ,  , 1, 1,  ],
+        [ , 1,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ , 1,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+    ];
+    this.cuerpo_["middle"][2] = [
+        [ ,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  , 1, 1,  , 1, 1, 1, 1, 1, 1,  ,  ],
+        [ ,  , 1,  ,  , 1, 1, 1, 1,  ,  , 1, 1],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+    ];
+    
+    this.cuerpo_["middle"][3] = [
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  , 1, 1],
+        [ ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1,  ,  ],
+        [ ,  ,  , 1,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+    ];
+
+
+    this.cuerpo_["down"][0] = [
+        [1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  , 1,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  , 1,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  , 1,  ,  ],
+    ];
+    this.cuerpo_["down"][1] = [
+        [ ,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  , 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ],
+        [1, 1,  ,  , 1, 1, 1, 1,  , 1, 1,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  , 1, 1],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+    ];
+    this.cuerpo_["down"][2] = [
+        [ ,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  , 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ],
+        [ ,  , 1,  , 1, 1, 1, 1,  , 1,  ,  ,  ],
+        [ ,  , 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+    ];
+    this.cuerpo_["down"][3] = [
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1, 1, 1,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  , 1, 1,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+    ];
+    
+    this.cuerpo_["golpe"][0] = [
+        [ ,  ,  , 1, 1, 1, 1, 1,  ,  , 1, 1,  ],
+        [ ,  ,  , 1, 1, 1, 1, 1, 1, 1,  ,  ,  ],
+        [ ,  , 1,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  , 1,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  , 1,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+    ];
+    
+    this.cuerpo_["golpe"][1] = [
+        [ ,  ,  ,  ,  ,  ,  ,  ,  , 1,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  , 1,  , 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  , 1,  , 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  , 1,  , 1, 1, 1, 1,  ,  ,  ,  ],
+    ];
+    
+    this.cuerpo_["saltando"][0] =  [
+        [ , 1,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  , 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  , 1,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  , 1,  ,  ,  ],
+        [ ,  ,  ,  , 1, 1, 1, 1,  , 1,  ,  ,  ],
+    ];
+
+    this.pies_ = [];
+
+    this.pies_[0] = [
+        [ ,  ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1,  ,  ,  , 1,  ,  ,  ,  ],
+        [ ,  ,  , 1,  ,  ,  ,  , 1,  ,  ,  ,  ],
+        [ ,  ,  , 1,  ,  ,  ,  , 1,  ,  ,  ,  ],
+    ];
+    this.pies_[1] = [
+        [ ,  ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1,  ,  ,  , 1,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1,  ,  ,  , 1,  ,  ,  ,  ],
+        [ ,  ,  , 1,  ,  , 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  , 1,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+    ];
+    this.pies_[2] = [
+        [ ,  ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1,  ,  ,  , 1,  ,  ,  ,  ],
+        [ ,  , 1, 1,  ,  ,  ,  , 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  , 1,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  , 1,  ,  ,  ],
+    ];
+    this.pies_[3] = [
+        [ ,  ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ],
+        [ ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ,  ],
+    ];
+
+    this.pies_[4] = [
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1, 1, 1,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  , 1,  , 1, 1,  ,  ,  ,  ],
+        [ ,  ,  , 1, 1, 1,  ,  , 1,  ,  ,  ,  ],
+        [ ,  ,  , 1,  ,  ,  ,  , 1,  ,  ,  ,  ],
+    ];
+
+    //this.PIES_ DE OSTIAZO
+    this.pies_[5] = [
+        [,  ,  ,  ,  ,  , 1,  , 1,  ,  ,  ,  ],
+        [,  ,  ,  ,  ,  , 1,  ,  , 1,  ,  ,  ],
+        [,  ,  ,  ,  ,  , 1, 1,  , 1,  ,  ,  ],
+        [,  ,  ,  ,  ,  ,  , 1,  ,  , 1,  ,  ],
+        [,  ,  ,  ,  ,  ,  , 1,  ,  , 1,  ,  ],
+    ];
+    this.pies_[6] = [
+        [,  ,  ,  ,  , 1,  ,  , 1,  ,  ,  ,  ],
+        [,  ,  ,  ,  , 1,  ,  ,  , 1,  ,  ,  ],
+        [,  ,  ,  ,  ,  , 1, 1,  ,  , 1, 1,  ],
+        [,  ,  ,  ,  ,  ,  , 1, 1,  ,  ,  ,  ],
+        [,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+    ];
+
+    //Saltando
+    this.pies_[7] = [
+        [ ,  ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ],
+        [ ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ,  ],
+        [ ,  ,  , 1,  ,  , 1,  ,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  , 1,  ,  ,  ,  ,  ,  ]
+    ];
+
+        
+
+    this.palo_ = [];
+    this.palo_[0] = [
+        [1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ],
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1],
+    ];
+    this.palo_[1] = [
+        [ ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1],
+        [ ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ],
+        [1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+    ];
+
+
+
+
+    this.update = function(dt) {
+        
+        //Control de si iba hacia la izquierda o a la derecha y friccion y aceleracion... Ahora no lo uso, pero puede ser util
+        this.wasleft_    = this.dx  < 0;
+        this.wasright   = this.dx  > 0;
+      
+        //reseteo las aceleraciones
+        this.ddx = 0;
+        this.ddy = this.gravity_;
+
+        //movimientos
+        
+        
+        if(!this.estoy_muerto_){
+
+            if (this.tiempo_ostiazo_ - 100 > juego.timestamp_() || this.tiempo_bloqueo_ - 100 > juego.timestamp_()){
+                if(this.ostia_izquierda_){
+                    this.ddx = this.ddx + this.accel_*5;
+                }
+                else{
+                    this.ddx = this.ddx - this.accel_*5;
+                }
+            }
+            if(juego.tiempo_cuenta_atras_ > juego.timestamp_()){
+                
+                if(juego.tiempo_cuenta_atras_ > juego.timestamp_() + 3000){
+                    if (this.player_num_ == 1){
+                        this.ddx = this.ddx + this.accel_ - this.friction_/15;
+                        this.izquierda_ = false;
+                        this.jumping_ = true;
+                    }
+                    else{
+                        this.ddx = this.ddx - this.accel_ + this.friction_/15;
+                        this.izquierda_ = true;
+                        this.jumping_ = true;
+
+                    }
+                }
+                else{
+                    this.dx = 0;
+                }
+            }
+            else{
+                if (this.left){
+                    this.ddx = this.ddx - this.accel_;
+                    this.izquierda_ = true;
+                }
+                else if (this.wasleft_){
+                    this.ddx = this.ddx + this.friction_;
+                }
+            
+                if (this.right){
+                    this.ddx = this.ddx + this.accel_;
+                    this.izquierda_ = false;
+                }
+                else if (this.wasright){
+                    this.ddx = this.ddx - this.friction_;
+                }
+
+                //Salto
+                if (this.jump_ && !this.jumping_){
+                    this.ddy = this.ddy - this.impulse_; // an instant big force impulse
+                    this.jumping_ = true;
+                
+                }
+            }
+
+            
+            //Colisiones...
+
+            this.check_cuerda_colisions_();
+            this.check_players_colisions_();
+
+        
+            //Si se pulsa accion
+            if(this.accion){
+                if ((juego.timestamp_() > this.tiempo_enfadado_ + this.delay_ostiazo_)
+                    && juego.timestamp_() > this.tiempo_ostiazo_ + 100){
+
+                        var mas_enfado = 0;
+                        if(this.jumping_){
+                            mas_enfado = 300;
+                        }
+                        
+                    w.ataque_audio_.play();
+                    this.tiempo_enfadado_ = juego.timestamp_()+200+mas_enfado;
+                }
+            }
+        }
+        else{
+            if(!this.jumping_){
+                this.ddy = this.ddy - this.impulse_/1.5; 
+                this.jumping_ = true;
+
+            }
+        }
+
+        //Posiciones
+        this.x  = this.x  + (dt * this.dx);
+        this.y  = this.y  + (dt * this.dy);
+
+        //velocidades
+        this.dx = juego.bound_(this.dx + (dt * this.ddx), -this.maxdx_, this.maxdx_);
+        this.dy = juego.bound_(this.dy + (dt * this.ddy), -this.maxdy_, this.maxdy_);
+
+        //Cambiando la velocidad con el level, andando
+        if(this.CPU_){
+            
+            this.cpu_ai_();
+    
+        }
+
+        
+        
+        if ((this.wasleft_  && (this.dx > 0)) ||
+            (this.wasright && (this.dx < 0))) {
+          this.dx = 0; // clamp at zero to prevent friction from making us jiggle side to side
+        }
+
+
+
+        
+        
+        
+        
+    };
+
+    this.check_cuerda_colisions_ = function() {
+        
+        var x_relativo = Math.ceil(this.x/4) + 2;
+        var alto_cuerda = juego.cuerda_[x_relativo];
+        var altura_jugador = Math.ceil(this.y + this.alto_);
+
+        
+        if(altura_jugador > alto_cuerda){
+            this.y = alto_cuerda - this.alto_;
+            if (this.dy >= 0) {
+                //this.y = juego.alto_total_/1.5 - this.alto_;
+                this.dy = - this.dy/3;
+                if(this.jumping_){
+                    this.tiempo_enfadado_ = juego.timestamp_();
+
+                }
+                this.jumping_ = false;
+            }
+        }
+    }
+
+
+    this.check_players_colisions_ = function() {
+
+        /** LIMITES DE LA PANTALLA */
+        //Comprobacion que no pasa de limite a la derecha
+        if(this.dx > 0 && 
+            (this.x + this.ancho_ >= (juego.ancho_total_ - 80) && (this.y + this.alto_ - 40 > juego.alto_total_/3))){ //Comprobacion de si esta fuera de la pantalla
+            this.x = juego.ancho_total_ - this.ancho_ - 80;
+            this.dx = 0;
+        }
+        //Comprobacion que no pasa de limite a la izquierda
+        if(this.dx < 0 && (this.x <= 80 && (this.y + this.alto_ - 40 > juego.alto_total_ /3))){
+            this.x = 80;
+            this.dx = 0;
+        }
+        if(this.x >= juego.ancho_total_ - this.ancho_){
+            var ed_cerca = 0;
+            if(this.y + this.alto_ - 40 > juego.alto_total_ /3){
+                ed_cerca = 80;
+            }
+            this.x = juego.ancho_total_ - this.ancho_ - ed_cerca;
+        }
+        if(this.x < 0){
+            this.x = 0;
+        }
+
+        if(this.y + this.alto_ > juego.alto_total_ /3 && this.dy > 0){
+            if(this.x <= 70 || (this.x + this.ancho_ >= (juego.ancho_total_ - 70))){
+                if(this.dy > 0){
+                    this.dy = - this.dy/3;
+                    this.jumping_ = false;
+                    this.y = juego.alto_total_ /3 - this.alto_;
+                }
+            }
+        }
+
+        
+        /** COLISION CON EL OTRO JUGADOR SIN OSTIAZO */
+        //TODO: esto habria que rehacerlo, mucho codigo...
+
+        var player_contrario = juego.player_;
+
+        if(this.player_num_ === 1){
+            player_contrario = juego.player2_;
+        }
+        
+        
+        if(this.dx > 0 
+            && (this.x + this.ancho_*1.5 >= player_contrario.x)
+            && (this.x < player_contrario.x)
+            && (this.y > player_contrario.y - this.alto_/2)
+            && (this.y < player_contrario.y + this.alto_*2)
+        ){
+            this.dx = 0;
+        }
+        if(this.dx < 0
+            &&(this.x <= player_contrario.x + this.ancho_*1.5)
+            &&(this.x > player_contrario.x)
+            && (this.y > player_contrario.y - this.alto_/2)
+            && (this.y < player_contrario.y + this.alto_*2)
+        ){
+            this.dx = 0;
+        }
+
+
+        
+        /** COLISION CON EL OTRO JUGADOR CON OSTIAZO */
+
+        if(this.tiempo_enfadado_ > juego.timestamp_()
+            //&& (this.tiempo_enfadado_ - juego.timestamp_()) < 150
+            && (player_contrario.tiempo_ostiazo_ <= juego.timestamp_())
+            ){
+            
+                var amplitud_ostiazo = 80; 
+
+                var cuanto_quita = 0;
+                
+                var bloqueo = false;
+                var ostia_rotacion = -35 * Math.PI / 180;
+                var tiempo_estimado_enfadado = 150;
+                var sumatorio = 1.5;
+                if(this.jumping_){
+                    tiempo_estimado_enfadado = 600;
+                    sumatorio = 0.7;
+                }
+                var percent_bloqueo = (tiempo_estimado_enfadado - (this.tiempo_enfadado_ - juego.timestamp_()))/200;
+                var bloqueo_size = this.block_size_ * (percent_bloqueo/2 + sumatorio);
+            
+                if((this.x <= player_contrario.x + this.ancho_ + amplitud_ostiazo)
+                    &&(this.x > player_contrario.x)
+                    && (this.y > player_contrario.y - this.alto_)
+                    && (this.y < player_contrario.y + this.alto_*2)
+                    && (this.izquierda_)
+                ){
+                    
+                    player_contrario.ostia_izquierda_ = false;
+                    if(player_contrario.jumping_){
+                        //TODO: controlar ostiazo en el aire
+                        if(player_contrario.tiempo_enfadado_ > juego.timestamp_()){
+                            //console.log("golpe parado - SALTANDO");
+                            bloqueo = true;
+                        }
+                        else{
+                            cuanto_quita = 0.3;
+                            //console.log("le atizo por la derecha - SALTANDO");
+                            player_contrario.ostia_abajo_ = false;
+                            player_contrario.ostia_arriba_ = false;
+                        }
+                    }
+                    else if(this.up || this.jumping_){ 
+                        if(player_contrario.up){  
+                            //console.log("golpe parado - ARRIBA");
+                            bloqueo = true;
+
+                        }
+                        else{
+                            cuanto_quita = 1;
+                            //console.log("le atizo por la derecha - ARRIBA");
+                            player_contrario.ostia_abajo_ = false;
+                            player_contrario.ostia_arriba_ = true;
+                        }
+                    }
+                    else if(this.down){  
+                        if(player_contrario.down){  
+                            //console.log("golpe parado - ABAJO");
+                            bloqueo = true;
+                        }
+                        else{
+                            cuanto_quita = 1;
+                            //console.log("le atizo por la derecha - ABAJO");
+                            player_contrario.ostia_abajo_ = true;
+                            player_contrario.ostia_arriba_ = false;
+                        }
+                    }
+                    else{
+                        if(!player_contrario.up & !player_contrario.down){  
+                            //console.log("golpe parado - MEDIO");
+                            bloqueo = true;
+                        }
+                        else{
+                            cuanto_quita = 2;
+                            //console.log("le atizo por la derecha - MEDIO");
+                            player_contrario.ostia_abajo_ = false;
+                            player_contrario.ostia_arriba_ = false;
+                        }
+                    }
+                }
+                if((this.x + this.ancho_ >= player_contrario.x - amplitud_ostiazo)
+                    && (this.x < player_contrario.x)
+                    && (this.y > player_contrario.y - this.alto_)
+                    && (this.y < player_contrario.y + this.alto_*2)
+                    && (!this.izquierda_)
+                ){
+                    
+                    player_contrario.ostia_izquierda_ = true;
+                    if(player_contrario.jumping_){
+                        //TODO: controlar ostiazo en el aire
+                        if(player_contrario.tiempo_enfadado_ > juego.timestamp_()){
+                            //console.log("golpe parado - SALTANDO");
+                            bloqueo = true;
+                        }
+                        else{
+                            cuanto_quita = 0.3;
+                            //console.log("le atizo por la izquierda - SALTANDO");
+                            player_contrario.ostia_abajo_ = false;
+                            player_contrario.ostia_arriba_ = false;
+                        }
+                    }
+                    else if(this.up || this.jumping_){ 
+                        if(player_contrario.up){  
+                            //console.log("golpe parado - ARRIBA");
+                            bloqueo = true;
+                        }
+                        else{
+                            cuanto_quita = 1;
+                            //console.log("le atizo por la izquierda - ARRIBA");
+                            player_contrario.ostia_abajo_ = false;
+                            player_contrario.ostia_arriba_ = true;
+                        }
+                    }
+                    else if(this.down){  
+                        if(player_contrario.down){  
+                            //console.log("golpe parado - ABAJO");
+                            bloqueo = true;
+                        }
+                        else{
+                            cuanto_quita = 1;
+                            //console.log("le atizo por la izquierda - ABAJO");
+                            player_contrario.ostia_abajo_ = true;
+                            player_contrario.ostia_arriba_ = false;
+                        }
+                    }
+                    else{
+                        if(!player_contrario.up & !player_contrario.down){  
+                            //console.log("golpe parado - MEDIO");
+                            bloqueo = true;
+                            
+                        }
+                        else{
+                            cuanto_quita = 2;
+                            //console.log("le atizo por la izquierda - MEDIO");
+                            player_contrario.ostia_abajo_ = false;
+                            player_contrario.ostia_arriba_ = false;
+                        }
+                    }
+                }
+
+                if(bloqueo){
+
+                    juego.tiempo_shacke_ = juego.timestamp_() + 100;
+                    juego.intensidad_shacke_ = 10;
+
+                    var ostia_nueva = new Ostiazo(this.block_size_ * - 15, 0 - this.alto_/2 + (this.block_size_ * -3), 1, bloqueo_size, "rgba(255,255,255, "+percent_bloqueo+")", player_contrario.x + player_contrario.ancho_/2, this.y + this.alto_/2, !this.izquierda_, ostia_rotacion);
+                    juego.ostiazos_.push(ostia_nueva);
+
+                    
+                    player_contrario.tiempo_bloqueo_ = juego.timestamp_()+150;
+
+
+                    w.bloqueo_audio_.play();
+                }
+                
+                if(cuanto_quita){
+                    
+                    w.ostia_audio_.play();
+                    player_contrario.tiempo_ostiazo_ = juego.timestamp_()+200;
+                    player_contrario.vida_ = player_contrario.vida_ - (this.pow_ * cuanto_quita);
+                }
+                
+        }
+
+    }
+
+
+
+    this.pinta_player_ = function( dt, ctx, counter) {
+
+
+        var x_player = this.x + (this.dx * dt);
+        var y_player = this.y + (this.dy * dt);
+
+        
+
+        ctx.beginPath();
+        
+        var que_cabeza = 0;
+        var que_pie = 0;
+        var que_palo = 0;
+        var que_cuerpo = 0;
+        var pos_cuerpo = "middle";
+        var mas_menos_cabeza_x = 0;
+        var cabeza_golpe = 0;
+        var tween = this.tween_frames_(counter, 60);
+        var negativo_tween = tween - 1;
+
+        if (Math.abs(this.dx) > 0) {
+            if(tween <= 0.25){
+                que_pie = 0;
+                que_palo = 0;
+                que_cuerpo = 0;
+                mas_menos_cabeza_x = 0;
+            }
+            else if(tween > 0.25 && tween <= 0.5){
+                que_pie = 1;
+                que_palo = 0;
+                que_cuerpo = 0;
+                mas_menos_cabeza_x = 0;
+            }
+            else if(tween > 0.5 && tween <= 0.75){
+                que_pie = 2;
+                que_palo = 1;
+                que_cuerpo = 1;
+                mas_menos_cabeza_x = 1;
+            }
+            else{
+                que_pie = 3;
+                que_palo = 1;
+                que_cuerpo = 1;
+                mas_menos_cabeza_x = 1;
+            }
+        }
+
+        var mas_abajo = 0;
+        if(this.down){
+            pos_cuerpo = "down";
+            mas_abajo = 3 * this.block_size_;
+        }
+
+        if(this.up){
+            pos_cuerpo = "up";
+        }
+
+
+        ctx.save();
+
+        var x_translate = x_player + this.ancho_/2;
+        var y_translate = y_player + this.alto_/2;
+        ctx.translate(x_translate, y_translate);
+
+        x_player = 0;
+        y_player = 0;
+        if(this.izquierda_){
+            ctx.scale(-1, 1);
+        }
+
+
+        var idle_movimiento = negativo_tween * 3;
+        var idle_movimiento2 = negativo_tween * 2.5;
+
+        var corrige_x_palo = 12;
+        var corrige_y_palo = 1;
+
+        var rotacion = false;
+
+        
+        if(this.estoy_muerto_){
+            
+            que_cabeza = 1;
+            mas_menos_cabeza_x = 1;
+            
+            cabeza_golpe = 0;
+
+            que_cuerpo = 0;
+            pos_cuerpo = "golpe"
+            que_pie = 5;
+            mas_abajo = 0;
+            rotacion = -25 * Math.PI / 180;
+        }
+        else if(this.jumping_){
+            
+            this.ostia_abajo_ = false;
+            this.ostia_arriba_ = false;
+
+            que_pie = 7;
+            que_cuerpo = 0;
+            pos_cuerpo = "saltando";
+            mas_abajo = 3 * this.block_size_;
+
+            if(this.tiempo_enfadado_ > juego.timestamp_()){
+                
+                
+
+                    var ostia_rotacion = 35 * Math.PI / 180;
+
+                    corrige_x_palo = 9;
+                    corrige_y_palo = 2;
+                    mas_abajo = 2 * this.block_size_;
+                    rotacion = 40 * Math.PI / 180;
+                    
+                    var ostia_nueva = new Ostiazo(x_player + (this.block_size_ * 2), y_player - this.alto_/2 + (this.block_size_ * 3), 0, this.block_size_*1.3, "rgba(84,173,40, 0.6)", x_translate, y_translate, this.izquierda_, ostia_rotacion);
+                    juego.ostiazos_.push(ostia_nueva);
+
+                
+            }
+            else if(this.tiempo_ostiazo_ > juego.timestamp_()){
+            
+                que_cabeza = 1;
+                mas_menos_cabeza_x = 5;
+                cabeza_golpe = 1 * this.block_size_;
+
+                que_cuerpo = 0;
+                pos_cuerpo = "golpe"
+                que_pie = 5;
+                mas_abajo = 2 * this.block_size_;
+                rotacion = -25 * Math.PI / 180;
+            }
+            else{
+                
+                ctx.translate(0, 10);
+                var rueda = 15 * counter * Math.PI / 180;
+                if(this.izquierda_){
+                    rueda = 15 * Math.PI / 180 * counter;
+                }
+                ctx.rotate(rueda);
+                ctx.translate(0, -10);
+            }
+        }
+        else if(this.tiempo_ostiazo_ > juego.timestamp_()){
+            
+                if((this.tiempo_ostiazo_ - juego.timestamp_()) > 80){
+                    
+                    
+                    //corrige_x_palo = -10;
+                    //corrige_y_palo = -5;
+                    
+
+                    que_cabeza = 1;
+                    mas_menos_cabeza_x = 5;
+                    cabeza_golpe = 1 * this.block_size_;
+
+                    que_cuerpo = 0;
+                    pos_cuerpo = "golpe"
+                    que_pie = 5;
+                    mas_abajo = 2 * this.block_size_;
+                    rotacion = -25 * Math.PI / 180;
+
+
+
+                }
+                else{
+
+                    //corrige_x_palo = -10;
+                    //corrige_y_palo = -5;
+
+                    que_cabeza = 1;
+                    mas_menos_cabeza_x = 5;
+                    cabeza_golpe = 1 * this.block_size_;
+
+                    que_cuerpo = 1;
+                    pos_cuerpo = "golpe"
+                    que_pie = 6;
+                    mas_abajo = 2 * this.block_size_;
+                    rotacion = -30 * Math.PI / 180;
+
+
+                }
+        }
+        else if(this.tiempo_enfadado_ > juego.timestamp_()){
+            if(this.up){
+                //PRUEBA PINTANDO ATAQUE UP
+                if((this.tiempo_enfadado_ - juego.timestamp_()) > 150){
+                    
+                    var ostia_rotacion = 35 * Math.PI / 180;
+                    
+                    corrige_x_palo = 20;
+                    corrige_y_palo = 7;
+                    que_cuerpo = 2;
+                    que_pie = 4;
+                    mas_abajo = 2 * this.block_size_;
+                    rotacion = 95 * Math.PI / 180;
+                    
+                    var ostia_nueva = new Ostiazo(x_player + (this.block_size_ * 2),  y_player - this.alto_/2 + (this.block_size_ * -19), 0, this.block_size_, "rgba(255,255,255, 0.4)", x_translate, y_translate, this.izquierda_, ostia_rotacion);
+                    
+                    juego.ostiazos_.push(ostia_nueva);
+
+
+
+                }
+                else if((this.tiempo_enfadado_ - juego.timestamp_()) > 50){
+
+                    var ostia_rotacion = 35 * Math.PI / 180;
+
+                    corrige_x_palo = 20;
+                    corrige_y_palo = 7;
+                    que_cuerpo = 3;
+                    que_pie = 4;
+                    mas_abajo = 2 * this.block_size_;
+                    rotacion = 145 * Math.PI / 180;
+                    
+                    var ostia_nueva = new Ostiazo(x_player + (this.block_size_ * 3), y_player - this.alto_/2 + (this.block_size_ * -20), 0, this.block_size_*1.3, "rgba(241,143,1, 0.6)", x_translate, y_translate, this.izquierda_, ostia_rotacion);
+                    juego.ostiazos_.push(ostia_nueva);
+
+                }
+            }
+            
+            else if(this.down){
+                //PRUEBA PINTANDO ATAQUE DOWN
+                if((this.tiempo_enfadado_ - juego.timestamp_()) > 150){
+                    
+                    var ostia_rotacion = -35 * Math.PI / 180;
+                    
+                    rotacion = -125 * Math.PI / 180;
+                    
+                    corrige_x_palo = 22;
+                    corrige_y_palo = 7;
+                    que_cuerpo = 2;
+                    que_pie = 4;
+                    mas_abajo = 2 * this.block_size_;
+                    
+                    var ostia_nueva = new Ostiazo(x_player + (this.block_size_ * 1),  y_player - this.alto_/2 + (this.block_size_ * 25), 0, this.block_size_, "rgba(255,255,255, 0.4)", x_translate, y_translate, this.izquierda_, ostia_rotacion);
+                    
+                    juego.ostiazos_.push(ostia_nueva);
+
+
+
+                }
+                else if((this.tiempo_enfadado_ - juego.timestamp_()) > 50){
+
+                    var ostia_rotacion = -35 * Math.PI / 180;
+
+                    
+                    rotacion = -195 * Math.PI / 180;
+                    
+                    corrige_x_palo = 23;
+                    corrige_y_palo = 7;
+                    que_cuerpo = 2;
+                    que_pie = 4;
+                    mas_abajo = 2 * this.block_size_;
+                    
+                    var ostia_nueva = new Ostiazo(x_player + (this.block_size_ * 5), y_player - this.alto_/2 + (this.block_size_ * 17), 0, this.block_size_*1.3, "rgba(8,19,127,0.6)", x_translate, y_translate, this.izquierda_, ostia_rotacion);
+                    juego.ostiazos_.push(ostia_nueva);
+
+                }
+            }
+            
+            else{
+
+                //PINTANDO ATAQUE middle
+                if((this.tiempo_enfadado_ - juego.timestamp_()) > 150){
+                    
+                    rotacion = -1 * Math.PI / 180;
+                    
+                    corrige_x_palo = 8;
+                    corrige_y_palo = 1;
+                    que_cuerpo = 2;
+                    que_pie = 4;
+                    mas_abajo = 2 * this.block_size_;
+
+                    var ostia_nueva = new Ostiazo(x_player + (this.block_size_ * 9),  y_player - this.alto_/2 + (this.block_size_ * 3), 0, this.block_size_, "rgba(255,255,255, 0.4)", x_translate, y_translate, this.izquierda_, rotacion);
+
+                    juego.ostiazos_.push(ostia_nueva);
+                }
+                else if((this.tiempo_enfadado_ - juego.timestamp_()) > 50){
+
+                    rotacion = -15 * Math.PI / 180;
+
+                    corrige_x_palo = -3;
+                    corrige_y_palo = 4;
+                    que_cuerpo = 3;
+                    que_pie = 4;
+                    mas_abajo = 2 * this.block_size_;
+
+                    var ostia_nueva = new Ostiazo(x_player + (this.block_size_ * 11), y_player - this.alto_/2 + (this.block_size_ * 0), 0, this.block_size_*1.3, "rgba(216,17,89, 0.4)", x_translate, y_translate, this.izquierda_, rotacion);
+                    juego.ostiazos_.push(ostia_nueva);
+                }
+            }
+
+        }
+        else if(this.tiempo_bloqueo_ > juego.timestamp_()){
+            rotacion = 25 * Math.PI / 180;
+            
+            corrige_x_palo = 12;
+            corrige_y_palo = 7;
+            que_cuerpo = 2;
+            que_pie = 4;
+            mas_abajo = 2 * this.block_size_;
+        }
+
+        
+
+        
+
+        //CUERPO
+        //juego.pinta_filas_columnas_(ctx, x_player - this.ancho_/2, y_player - this.alto_/2 + (this.block_size_ * 6) + mas_abajo + idle_movimiento2, this.cuerpo_[pos_cuerpo][que_cuerpo], this.block_size_, this.color_);
+        juego.pinta_filas_columnas_(ctx, x_player - this.ancho_/2, y_player - this.alto_/2 + (this.block_size_ * 6) + mas_abajo + idle_movimiento2, this.cuerpo_[pos_cuerpo][que_cuerpo], this.block_size_, juego.player_colors_[this.tipo_].cuerpo_);
+        
+        var r_cabeza = 0;
+        if(this.tiempo_ostiazo_ > juego.timestamp_()){
+            r_cabeza = 20;
+        }
+        if(this.estoy_muerto_){
+            r_cabeza = -20;
+        }
+        ctx.rotate(r_cabeza * Math.PI / 180);
+
+        //CABEZA
+        //juego.pinta_filas_columnas_(ctx, x_player + (this.block_size_ * 0) - (mas_menos_cabeza_x * this.block_size_/2), y_player + (this.block_size_ * 1) - this.alto_/2 + mas_abajo + idle_movimiento + cabeza_golpe, this.cabeza_[que_cabeza], this.block_size_,  this.color_);
+        juego.pinta_filas_columnas_(ctx, x_player + (this.block_size_ * 0) - (mas_menos_cabeza_x * this.block_size_/2), y_player + (this.block_size_ * 1) - this.alto_/2 + mas_abajo + idle_movimiento + cabeza_golpe, this.cabeza_[que_cabeza], this.block_size_,  juego.player_colors_[this.tipo_].cabeza_);
+        
+        ctx.rotate(r_cabeza*(-1) * Math.PI / 180);
+        
+        //PIES
+        //juego.pinta_filas_columnas_(ctx, x_player - this.ancho_/2, y_player - this.alto_/2 + (this.block_size_ * 12), this.pies_[que_pie], this.block_size_, this.color_);
+        juego.pinta_filas_columnas_(ctx, x_player - this.ancho_/2, y_player - this.alto_/2 + (this.block_size_ * 12), this.pies_[que_pie], this.block_size_, juego.player_colors_[this.tipo_].pies_);
+        
+        
+        if(this.jumping_){
+
+        }
+        else if(this.down){
+            ctx.rotate(10 * Math.PI / 180);
+        }
+        else if(this.up){
+            ctx.rotate(45 * Math.PI / 180);
+            corrige_x_palo = 20;
+            corrige_y_palo = 7;
+        }
+
+        if(rotacion){
+            ctx.rotate(rotacion);
+        }
+        
+        
+        //palo
+        //juego.pinta_filas_columnas_(ctx, x_player - (this.block_size_ * corrige_x_palo), y_player - (this.block_size_ * (corrige_y_palo - 1)) + mas_abajo + idle_movimiento2, this.palo_[que_palo], this.block_size_, "#ff0000");
+        
+        juego.pinta_filas_columnas_(ctx, x_player - (this.block_size_ * corrige_x_palo), y_player - (this.block_size_ * (corrige_y_palo - 1)) + mas_abajo + idle_movimiento2, this.palo_[que_palo], this.block_size_, juego.colors_1_2_[this.player_num_]);
+        
+       
+
+        //console.log(this.tween_frames_(10,20));
+        ctx.restore();
+    };
+
+    this.pinta_vida_ = function (ctx){
+
+        var ancho_cargador = 200;
+        var alto_cargador = 50;
+        var percent = this.vida_/this.vida_inicial_;
+
+        if(percent <= 0){
+            //TODO: lanza gameover ganador el otro
+            percent = 0;
+            if(this.player_num_ == 1){
+                if(juego.modo_ == 2){
+                    juego.ganador_ = "2";
+                }
+                else{
+                    juego.ganador_ = "cpu";
+                }
+            }
+            else{
+                if(juego.modo_ == 2){
+                    juego.ganador_ = "1";
+                }
+                else{
+                    juego.ganador_ = "1_cpu";
+                }
+            }
+
+            this.estoy_muerto_ = true;  
+            
+            w.ostia_final_audio_.play();
+            
+            juego.tiempo_shacke_ = juego.timestamp_() + 500;
+            juego.intensidad_shacke_ = 20;
+            juego.fpsInterval_     = 1000 / 20;
+            if(juego.modo_ == 1 && juego.level_ < 4 && this.player_num_ != 1){
+                juego.siguiente_oponente_(ctx);
+            }
+            else{
+                juego.game_over_(ctx);
+                juego.pinta_play_again_(ctx);
+            }
+        }
+
+        ctx.fillStyle="rgb(11,204,0)";
+        if(percent < 0.8){
+            ctx.fillStyle="rgb(224,239,20)";
+        }
+        if(percent < 0.6){
+            ctx.fillStyle="rgb(204,199,0)";
+        }
+        if(percent < 0.4){
+            ctx.fillStyle="rgb(239,92,20)";
+        }
+        if(percent < 0.2){
+            ctx.fillStyle="rgb(255,0,0)";
+        }
+
+        var y_vida = 50;
+        var x_vida = 50;
+        if(this.player_num_ != 1){
+            x_vida = juego.ancho_total_ - 50 - ancho_cargador;
+        }
+
+        
+        ctx.fillRect(x_vida, y_vida, percent * ancho_cargador, alto_cargador);
+
+        ctx.strokeStyle = juego.colors_1_2_[this.player_num_];
+        ctx.lineWidth = 8;
+        ctx.strokeRect(x_vida, y_vida, ancho_cargador, alto_cargador);
+
+
+    }
+
+    //TODO: igual lo suyo es usar esto para otras cosas y meterlo en el Game.js
+    this.tween_frames_ = function(frame, duration) {
+        var half  = duration/2,
+            pulse = frame%duration;
+        return pulse < half ? (pulse/half) : 1-(pulse-half)/half;
+    };
+
+    //TODO: igual lo suyo es usar esto para otras cosas y meterlo en el Game.js
+    this.cpu_ai_ = function() {
+        var distancia = this.x - juego.player_.x;
+
+        var percent_salto = 0.99;
+        //Cambia posicion X
+        if(Math.random() > 0.96){
+            if(distancia > this.ancho_ + 200){
+                this.left = true;
+                this.right = false;
+            }
+            else if(distancia < -1 * (this.ancho_ + 200)){
+                this.right = true;
+                this.left = false;
+            }
+            else{
+                if(Math.random() > 0.5){
+                    if(distancia<0){
+                        this.right = true;
+                        this.left = false;
+                        percent_salto = 0.2;
+                    }
+                    else{
+                        this.left = true;
+                        this.right = false;
+                        percent_salto = 0.2;
+                    }
+                }
+            }
+        }
+        if(Math.random() > percent_salto){
+            this.jump_ = true;
+        }
+        else{
+            this.jump_ = false;
+        }
+
+        //Cambia posicion palo
+        var ran_altura = Math.random();
+        var ran_bloqueo = Math.random();
+        if(this.tiempo_cambia_posicion_ < juego.timestamp_()){
+            if(ran_altura<0.4){
+                this.up = true;
+                this.down = false;
+            }
+            else if(ran_altura>0.9){
+                this.up = false;
+                this.down = true;
+            }
+            else{
+                this.up = false;
+                this.down = false;
+            }
+
+            var multiplicador = 4000;
+            if(this.ostia_abajo_ && ran_bloqueo<0.99){ 
+                this.up = false;
+                this.down = true;
+                multiplicador = 500;
+            } 
+            else if(this.ostia_arriba_ && ran_bloqueo<0.99){
+                this.up = true;
+                this.down = false;
+                multiplicador = 500;
+            }
+            else{
+                this.up = false;
+                this.down = false;
+                multiplicador = 500;
+            }
+
+            this.tiempo_cambia_posicion_ = juego.timestamp_() + Math.random()*multiplicador;
+        }
+
+
+        //Mete ostiazo
+        if(this.tiempo_next_ostiazo_ < juego.timestamp_() && Math.abs(distancia) < 150){
+            if(Math.random()<0.7){
+                this.accion = true;
+            }
+            this.tiempo_next_ostiazo_ = juego.timestamp_() + Math.random()*(5-juego.level_)*200;
+        }
+        else{
+            this.accion = false;
+        }
+    };
+
+};
+</script>
+        <script>
+
+/**************************************************
+** CUERDA CLASS
+**************************************************/
+var Cuerda = function(juego) {
+
+    this.correccion_bezier_ = 30;
+    
+    this.max_up_ = 10;
+
+    this.render_ = function(dt, ctx, counter){
+        
+        //ctx.beginPath();
+        this.alto_linea_ = juego.alto_total_/ 1.8;
+        //ctx.moveTo(-10, this.alto_linea_);
+
+        
+        var x1 = juego.player_.x;
+        var x2 = juego.player2_.x;
+
+        if(juego.player_.x > juego.player2_.x){
+            x1 = juego.player2_.x;
+            x2 = juego.player_.x;
+        }
+
+        var player_mas_alto = juego.player_.y + juego.player_.alto_ + this.correccion_bezier_;
+        var player2_mas_alto = juego.player2_.y + juego.player2_.alto_ + this.correccion_bezier_;
+        if(juego.player2_.estoy_muerto_){
+            player2_mas_alto = juego.player_.y + juego.player_.alto_ + this.correccion_bezier_/2;
+        }
+        if(juego.player_.estoy_muerto_){
+            player_mas_alto = juego.player2_.y + juego.player2_.alto_ + this.correccion_bezier_/2;
+        }
+
+        var maximo_rebote_1 = Math.max(player_mas_alto, this.alto_linea_ - this.max_up_);
+        var maximo_rebote_2 = Math.max(player2_mas_alto, this.alto_linea_ - this.max_up_);
+        
+
+
+        /*
+        ctx.bezierCurveTo(x1, maximo_rebote_1, x2, maximo_rebote_2, juego.ancho_total_ + 10, this.alto_linea_);
+        ctx.strokeStyle="#ffffff";
+        ctx.lineWidth=4;
+        ctx.stroke();
+        */
+
+        juego.cuerda_ = [];      
+        this.curva_guay_(ctx, Math.ceil(-10/4), Math.ceil(this.alto_linea_/4), Math.ceil(x1/4), Math.ceil(maximo_rebote_1/4), Math.ceil(x2/4), Math.ceil(maximo_rebote_2/4), Math.ceil((juego.ancho_total_ + 10)/4), Math.ceil(this.alto_linea_/4));
+        
+    }
+
+    /* CURVA DE BEZIER GUAY */
+    this.curva_guay_ = function(ctx, x0, y0, x1, y1, x2, y2, x3, y3){
+        var n = 0, i = 0;
+        var xc = x0+x1-x2-x3, xa = xc-4*(x1-x2);
+        var xb = x0-x1-x2+x3, xd = xb+4*(x1+x2);
+        var yc = y0+y1-y2-y3, ya = yc-4*(y1-y2);
+        var yb = y0-y1-y2+y3, yd = yb+4*(y1+y2);
+        var fx0 = x0, fx1, fx2, fx3, fy0 = y0, fy1, fy2, fy3;
+        var t1 = xb*xb-xa*xc, t2, t = new Array(5);
+                                      /* sub-divide curve at gradient sign changes */
+        if (xa == 0) {                                               /* horizontal */
+           if (Math.abs(xc) < 2*Math.abs(xb)) t[n++] = xc/(2.0*xb);  /* one change */
+        } else if (t1 > 0.0) {                                      /* two changes */
+           t2 = Math.sqrt(t1);
+           t1 = (xb-t2)/xa; if (Math.abs(t1) < 1.0) t[n++] = t1;
+           t1 = (xb+t2)/xa; if (Math.abs(t1) < 1.0) t[n++] = t1;
+        }
+        t1 = yb*yb-ya*yc;
+        if (ya == 0) {                                                 /* vertical */
+           if (Math.abs(yc) < 2*Math.abs(yb)) t[n++] = yc/(2.0*yb);  /* one change */
+        } else if (t1 > 0.0) {                                      /* two changes */
+           t2 = Math.sqrt(t1);
+           t1 = (yb-t2)/ya; if (Math.abs(t1) < 1.0) t[n++] = t1;
+           t1 = (yb+t2)/ya; if (Math.abs(t1) < 1.0) t[n++] = t1;
+        }
+        for (i = 1; i < n; i++)                         /* bubble sort of 4 points */
+           if ((t1 = t[i-1]) > t[i]) { t[i-1] = t[i]; t[i] = t1; i = 0; }
+     
+        t1 = -1.0; t[n] = 1.0;                                /* begin / end point */
+        for (i = 0; i <= n; i++) {                 /* plot each segment separately */
+           t2 = t[i];                                /* sub-divide at t[i-1], t[i] */
+           fx1 = (t1*(t1*xb-2*xc)-t2*(t1*(t1*xa-2*xb)+xc)+xd)/8-fx0;
+           fy1 = (t1*(t1*yb-2*yc)-t2*(t1*(t1*ya-2*yb)+yc)+yd)/8-fy0;
+           fx2 = (t2*(t2*xb-2*xc)-t1*(t2*(t2*xa-2*xb)+xc)+xd)/8-fx0;
+           fy2 = (t2*(t2*yb-2*yc)-t1*(t2*(t2*ya-2*yb)+yc)+yd)/8-fy0;
+           fx0 -= fx3 = (t2*(t2*(3*xb-t2*xa)-3*xc)+xd)/8;
+           fy0 -= fy3 = (t2*(t2*(3*yb-t2*ya)-3*yc)+yd)/8;
+           x3 = Math.floor(fx3+0.5); y3 = Math.floor(fy3+0.5);     /* scale bounds */
+           if (fx0 != 0.0) { fx1 *= fx0 = (x0-x3)/fx0; fx2 *= fx0; }
+           if (fy0 != 0.0) { fy1 *= fy0 = (y0-y3)/fy0; fy2 *= fy0; }
+           if (x0 != x3 || y0 != y3)                            /* segment t1 - t2 */
+              this.plotCubicBezierSeg_(ctx, x0,y0, x0+fx1,y0+fy1, x0+fx2,y0+fy2, x3,y3);
+           x0 = x3; y0 = y3; fx0 = fx3; fy0 = fy3; t1 = t2;
+        }
+    }
+
+    this.plotCubicBezierSeg_ = function(ctx, x0, y0, x1, y1, x2, y2, x3, y3){     
+        var f, fx, fy, leg = 1;
+        var sx = x0 < x3 ? 1 : -1, sy = y0 < y3 ? 1 : -1;        /* step direction */
+        var xc = -Math.abs(x0+x1-x2-x3), xa = xc-4*sx*(x1-x2), xb = sx*(x0-x1-x2+x3);
+        var yc = -Math.abs(y0+y1-y2-y3), ya = yc-4*sy*(y1-y2), yb = sy*(y0-y1-y2+y3);
+        var ab, ac, bc, cb, xx, xy, yy, dx, dy, ex, pxy, EP = 0.01;
+                                                      /* check for curve restrains */
+        /* slope P0-P1 == P2-P3    and  (P0-P3 == P1-P2      or  no slope change)  */
+     
+        if (xa == 0 && ya == 0)                                /* quadratic Bezier */
+           return this.plotQuadBezierSeg_(ctx, x0,y0, (3*x1-x0)>>1,(3*y1-y0)>>1, x3,y3);
+        x1 = (x1-x0)*(x1-x0)+(y1-y0)*(y1-y0)+1;                    /* line lengths */
+        x2 = (x2-x3)*(x2-x3)+(y2-y3)*(y2-y3)+1;
+     
+        do {                                                /* loop over both ends */
+           ab = xa*yb-xb*ya; ac = xa*yc-xc*ya; bc = xb*yc-xc*yb;
+           ex = ab*(ab+ac-3*bc)+ac*ac;       /* P0 part of self-intersection loop? */
+           f = ex > 0 ? 1 : Math.floor(Math.sqrt(1+1024/x1));   /* calc resolution */
+           ab *= f; ac *= f; bc *= f; ex *= f*f;            /* increase resolution */
+           xy = 9*(ab+ac+bc)/8; cb = 8*(xa-ya);  /* init differences of 1st degree */
+           dx = 27*(8*ab*(yb*yb-ya*yc)+ex*(ya+2*yb+yc))/64-ya*ya*(xy-ya);
+           dy = 27*(8*ab*(xb*xb-xa*xc)-ex*(xa+2*xb+xc))/64-xa*xa*(xy+xa);
+                                                 /* init differences of 2nd degree */
+           xx = 3*(3*ab*(3*yb*yb-ya*ya-2*ya*yc)-ya*(3*ac*(ya+yb)+ya*cb))/4;
+           yy = 3*(3*ab*(3*xb*xb-xa*xa-2*xa*xc)-xa*(3*ac*(xa+xb)+xa*cb))/4;
+           xy = xa*ya*(6*ab+6*ac-3*bc+cb); ac = ya*ya; cb = xa*xa;
+           xy = 3*(xy+9*f*(cb*yb*yc-xb*xc*ac)-18*xb*yb*ab)/8;
+     
+           if (ex < 0) {         /* negate values if inside self-intersection loop */
+              dx = -dx; dy = -dy; xx = -xx; yy = -yy; xy = -xy; ac = -ac; cb = -cb;
+           }                                     /* init differences of 3rd degree */
+           ab = 6*ya*ac; ac = -6*xa*ac; bc = 6*ya*cb; cb = -6*xa*cb;
+           dx += xy; ex = dx+dy; dy += xy;                    /* error of 1st step */
+     exit: 
+           for (pxy = 0, fx = fy = f; x0 != x3 && y0 != y3; ) {
+              this.setPixel_(ctx, x0, y0);                                       /* plot curve */
+              do {                                  /* move sub-steps of one pixel */
+                 if (pxy == 0) if (dx > xy || dy < xy) break exit;    /* confusing */
+                 if (pxy == 1) if (dx > 0 || dy < 0) break exit;         /* values */
+                 y1 = 2*ex-dy;                    /* save value for test of y step */
+                 if (2*ex >= dx) {                                   /* x sub-step */
+                    fx--; ex += dx += xx; dy += xy += ac; yy += bc; xx += ab;
+                 } else if (y1 > 0) break exit;
+                 if (y1 <= 0) {                                      /* y sub-step */
+                    fy--; ex += dy += yy; dx += xy += bc; xx += ac; yy += cb;
+                 }
+              } while (fx > 0 && fy > 0);                       /* pixel complete? */
+              if (2*fx <= f) { x0 += sx; fx += f; }                      /* x step */
+              if (2*fy <= f) { y0 += sy; fy += f; }                      /* y step */
+              if (pxy == 0 && dx < 0 && dy > 0) pxy = 1;      /* pixel ahead valid */
+           }
+           xx = x0; x0 = x3; x3 = xx; sx = -sx; xb = -xb;             /* swap legs */
+           yy = y0; y0 = y3; y3 = yy; sy = -sy; yb = -yb; x1 = x2;
+        } while (leg--);                                          /* try other end */
+        this.plotLine_(ctx, x0,y0, x3,y3);       /* remaining part in case of cusp or crunode */
+    }
+
+
+    this.plotQuadBezierSeg_ = function(ctx, x0, y0, x1, y1, x2, y2){
+        var sx = x2-x1, sy = y2-y1;
+        var xx = x0-x1, yy = y0-y1, xy;               /* relative values for checks */
+        var dx, dy, err, cur = xx*sy-yy*sx;                            /* curvature */
+      
+      
+        if (sx*sx+sy*sy > xx*xx+yy*yy) {                 /* begin with shorter part */
+          x2 = x0; x0 = sx+x1; y2 = y0; y0 = sy+y1; cur = -cur;       /* swap P0 P2 */
+        }
+        if (cur != 0) {                                         /* no straight line */
+          xx += sx; xx *= sx = x0 < x2 ? 1 : -1;                /* x step direction */
+          yy += sy; yy *= sy = y0 < y2 ? 1 : -1;                /* y step direction */
+          xy = 2*xx*yy; xx *= xx; yy *= yy;               /* differences 2nd degree */
+          if (cur*sx*sy < 0) {                                /* negated curvature? */
+            xx = -xx; yy = -yy; xy = -xy; cur = -cur;
+          }
+          dx = 4.0*sy*cur*(x1-x0)+xx-xy;                  /* differences 1st degree */
+          dy = 4.0*sx*cur*(y0-y1)+yy-xy;
+          xx += xx; yy += yy; err = dx+dy+xy;                     /* error 1st step */
+          do {
+            this.setPixel_(ctx,x0,y0);                                          /* plot curve */
+            if (x0 == x2 && y0 == y2) return;       /* last pixel -> curve finished */
+            y1 = 2*err < dx;                       /* save value for test of y step */
+            if (2*err > dy) { x0 += sx; dx -= xy; err += dy += yy; }      /* x step */
+            if (    y1    ) { y0 += sy; dy -= xy; err += dx += xx; }      /* y step */
+          } while (dy < 0 && dx > 0);        /* gradient negates -> algorithm fails */
+        }
+        this.plotLine_(ctx, x0,y0, x2,y2);                       /* plot remaining part to end */
+    }
+
+    this.plotLine_ = function(ctx, x0, y0, x1, y1){
+        var dx =  Math.abs(x1-x0), sx = x0<x1 ? 1 : -1;
+        var dy = -Math.abs(y1-y0), sy = y0<y1 ? 1 : -1;
+        var err = dx+dy, e2;                                   /* error value e_xy */
+     
+        for (;;){                                                          /* loop */
+           this.setPixel_(ctx,x0,y0);
+           if (x0 == x1 && y0 == y1) break;
+           e2 = 2*err;
+           if (e2 >= dy) { err += dy; x0 += sx; }                        /* x step */
+           if (e2 <= dx) { err += dx; y0 += sy; }                        /* y step */
+        } 
+    }
+
+    
+    this.setPixel_ = function(ctx, x, y){
+        var zoom = 4;
+        //ctx.fillStyle = '#ff0000';
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fillRect(x*zoom,y*zoom,zoom,zoom);
+        
+        juego.cuerda_.push(y*zoom);
+    }
+
+    
+    /* FIN CURVA DE BEZIER GUAY */
+}
+</script>
+        <script >var song = {
+  songData: [
+    { // Instrument 0
+      i: [
+      3, // OSC1_WAVEFORM
+      194, // OSC1_VOL
+      128, // OSC1_SEMI
+      0, // OSC1_XENV
+      2, // OSC2_WAVEFORM
+      198, // OSC2_VOL
+      128, // OSC2_SEMI
+      6, // OSC2_DETUNE
+      0, // OSC2_XENV
+      0, // NOISE_VOL
+      12, // ENV_ATTACK
+      12, // ENV_SUSTAIN
+      33, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      0, // LFO_WAVEFORM
+      61, // LFO_AMT
+      4, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      2, // FX_FILTER
+      109, // FX_FREQ
+      86, // FX_RESONANCE
+      7, // FX_DIST
+      32, // FX_DRIVE
+      112, // FX_PAN_AMT
+      3, // FX_PAN_FREQ
+      67, // FX_DELAY_AMT
+      2 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [1,7,1,7,8,13,17],
+      // Columns
+      c: [
+        {n: [125,125,137,125,125,135,125,125,134,125,125,128,,128,,128,128,130,125,125,125,125,125,125,125,125,125,125,125,125,125,125,,,144,,,142,,,142,,,135,,135,,135,135,137],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [125,125,137,125,125,135,125,125,134,125,125,128,,128,,128,128,130,125,125,125,125,125,125,125,125,125,125,125,125,125,133,,,144,,,142,,,142,,,135,,135,,135,135,137],
+          f: []},
+        {n: [128,128,128,128,128,128,128,128,128,128,128,128,128,127,125,122,122,122,122,122,122,122,122,122,118,118,118,118,118,118,118,118,133,133,133,133,133,133,133,133,133,133,133,133,133,133,133,130,130,130,130,130,130,130,130,130,130,130,130,130,130,130,130,130,137,137,137,137,137,137,137,137,137,137,137,137,137,137,137,134,134,134,134,134,134,134,134,134,134,134,134,134,134,134,134,134,,,,,,,,,,,,,,,,137,137,137,137,137,137,137,137,137,137,137,137,137,137,137,137,137],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [128,128,128,128,128,128,128,128,128,128,128,128,128,127,125,123,130,130,,130,130,,130,130,,130,130,,130,130,,130,133,133,133,133,133,133,133,133,133,133,133,133,133,133,133,127,134,134,,134,134,,134,134,,134,134,,134,134,,134,137,137,137,137,137,137,137,137,137,137,137,137,137,137,137,130,137,137,,137,137,,137,137,,137,137,,137,137,,137],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [130,,130,130,,130,130,,130,130,,130,130,,,,,,,,,,,,,,,,,,,,134,,134,134,,134,134,,134,134,,134,134,,,,,,,,,,,,,,,,,,,,137,,137,137,,137,137,,137,137,,137,137],
+          f: []}
+      ]
+    },
+    { // Instrument 1
+      i: [
+      0, // OSC1_WAVEFORM
+      255, // OSC1_VOL
+      117, // OSC1_SEMI
+      1, // OSC1_XENV
+      0, // OSC2_WAVEFORM
+      255, // OSC2_VOL
+      110, // OSC2_SEMI
+      0, // OSC2_DETUNE
+      1, // OSC2_XENV
+      0, // NOISE_VOL
+      4, // ENV_ATTACK
+      6, // ENV_SUSTAIN
+      35, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      0, // LFO_WAVEFORM
+      0, // LFO_AMT
+      0, // LFO_FREQ
+      0, // LFO_FX_FREQ
+      2, // FX_FILTER
+      14, // FX_FREQ
+      0, // FX_RESONANCE
+      1, // FX_DIST
+      39, // FX_DRIVE
+      76, // FX_PAN_AMT
+      5, // FX_PAN_FREQ
+      0, // FX_DELAY_AMT
+      0 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [2,2,2,2,2,14,18],
+      // Columns
+      c: [
+        {n: [],
+          f: []},
+        {n: [137,137,,,137,137,,,137,137,,,137,,,,137,137,,,140,,,,137,137,,,140],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [137,137,,,137,137,,,137,137,,,137,,,,,137,137,,137,137,,137,137,,137,137,,137,,137],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [,125,125,,125,125,,125,125,,125,125,,125],
+          f: []}
+      ]
+    },
+    { // Instrument 2
+      i: [
+      0, // OSC1_WAVEFORM
+      160, // OSC1_VOL
+      128, // OSC1_SEMI
+      1, // OSC1_XENV
+      0, // OSC2_WAVEFORM
+      160, // OSC2_VOL
+      128, // OSC2_SEMI
+      0, // OSC2_DETUNE
+      1, // OSC2_XENV
+      210, // NOISE_VOL
+      4, // ENV_ATTACK
+      7, // ENV_SUSTAIN
+      41, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      0, // LFO_WAVEFORM
+      60, // LFO_AMT
+      4, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      2, // FX_FILTER
+      255, // FX_FREQ
+      0, // FX_RESONANCE
+      0, // FX_DIST
+      32, // FX_DRIVE
+      61, // FX_PAN_AMT
+      5, // FX_PAN_FREQ
+      32, // FX_DELAY_AMT
+      6 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [3,3,3,3,3,15,19],
+      // Columns
+      c: [
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,142,,,,142,,,,142,,,,142,,,,142,,,,142,,,,142,,,,142],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,142,,,,142,,,,142,,,,142,,142,,,142,,,130,,,130,,,130,,130],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,130,,,130,,,130,,,130,,,130,,130,,162,,161,,160,161,160,159,158,,157,,156,,157],
+          f: []}
+      ]
+    },
+    { // Instrument 3
+      i: [
+      3, // OSC1_WAVEFORM
+      194, // OSC1_VOL
+      128, // OSC1_SEMI
+      0, // OSC1_XENV
+      2, // OSC2_WAVEFORM
+      198, // OSC2_VOL
+      128, // OSC2_SEMI
+      6, // OSC2_DETUNE
+      0, // OSC2_XENV
+      0, // NOISE_VOL
+      12, // ENV_ATTACK
+      12, // ENV_SUSTAIN
+      33, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      0, // LFO_WAVEFORM
+      61, // LFO_AMT
+      4, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      2, // FX_FILTER
+      109, // FX_FREQ
+      86, // FX_RESONANCE
+      7, // FX_DIST
+      32, // FX_DRIVE
+      112, // FX_PAN_AMT
+      3, // FX_PAN_FREQ
+      67, // FX_DELAY_AMT
+      2 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [4,4,4,4,10,16,20],
+      // Columns
+      c: [
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [113,116,125,,,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,113,121],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [121,121,121,121,121,121,121,121,121,121,121,121,121,123,116,118,118,118,118,118,118,118,118,118,122,122,122,122,122,122,122,122],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [121,121,121,121,121,121,121,121,121,121,121,121,121,123,116,,118,118,,118,118,,118,118,,118,118,,118,118,,118],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [118,,118,118,,118,118,,118,118,,118,118,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,138,,137,,136,137,136,135,134,,133,,132,,133],
+          f: []}
+      ]
+    },
+    { // Instrument 4
+      i: [
+      1, // OSC1_WAVEFORM
+      192, // OSC1_VOL
+      128, // OSC1_SEMI
+      0, // OSC1_XENV
+      1, // OSC2_WAVEFORM
+      191, // OSC2_VOL
+      116, // OSC2_SEMI
+      9, // OSC2_DETUNE
+      0, // OSC2_XENV
+      0, // NOISE_VOL
+      6, // ENV_ATTACK
+      22, // ENV_SUSTAIN
+      34, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      0, // LFO_WAVEFORM
+      69, // LFO_AMT
+      3, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      1, // FX_FILTER
+      23, // FX_FREQ
+      167, // FX_RESONANCE
+      0, // FX_DIST
+      32, // FX_DRIVE
+      77, // FX_PAN_AMT
+      6, // FX_PAN_FREQ
+      128, // FX_DELAY_AMT
+      4 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [5,6,5,11,9,12,21],
+      // Columns
+      c: [
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [154,153,,151,,147,,159,,,158,,,156,,154,153,154,153,154,153,154,153,154,153,156,161,156,153,154,159,154],
+          f: []},
+        {n: [154,153,,151,,147,,159,,,158,,,163,,159,165,,,,161,,,,163,,,,159],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [,,,168,,,166,,173,,,166,,,164,,163,164,161,163,159,157,154,152,154,157,154,152,149,147,161,159],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [154,153,,151,,147,,159,,,158,,,163,,159,165,,,,,,,,165,166,168,,,166,168,169],
+          f: []},
+        {n: [,,164,,,163,,,159,,,157,,159,164,166,,,,,,,,,,,,,,156,159,161,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,161,164,166],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [],
+          f: []},
+        {n: [,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,154,,153,,152,153,152,151,150,,149,,148,,149],
+          f: []}
+      ]
+    },
+  ],
+  rowLen: 6615,   // In sample lengths
+  patternLen: 32,  // Rows per pattern
+  endPattern: 6,  // End pattern
+  numChannels: 5  // Number of channels
+};
+
+var ataque = {
+  songData: [
+    { // Instrument 0
+      i: [
+      0, // OSC1_WAVEFORM
+      214, // OSC1_VOL
+      104, // OSC1_SEMI
+      1, // OSC1_XENV
+      0, // OSC2_WAVEFORM
+      204, // OSC2_VOL
+      104, // OSC2_SEMI
+      0, // OSC2_DETUNE
+      1, // OSC2_XENV
+      229, // NOISE_VOL
+      4, // ENV_ATTACK
+      40, // ENV_SUSTAIN
+      21, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      0, // LFO_WAVEFORM
+      231, // LFO_AMT
+      6, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      2, // FX_FILTER
+      183, // FX_FREQ
+      15, // FX_RESONANCE
+      0, // FX_DIST
+      13, // FX_DRIVE
+      232, // FX_PAN_AMT
+      4, // FX_PAN_FREQ
+      0, // FX_DELAY_AMT
+      0 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [1],
+      // Columns
+      c: [
+        {n: [118],
+         f: []}
+      ]
+    },
+  ],
+  rowLen: 300,   // In sample lengths
+  patternLen: 32,  // Rows per pattern
+  endPattern: 0,  // End pattern
+  numChannels: 1  // Number of channels
+};
+
+var bloqueo = {
+  songData: [
+    { // Instrument 0
+      i: [
+      0, // OSC1_WAVEFORM
+      255, // OSC1_VOL
+      116, // OSC1_SEMI
+      1, // OSC1_XENV
+      0, // OSC2_WAVEFORM
+      255, // OSC2_VOL
+      120, // OSC2_SEMI
+      0, // OSC2_DETUNE
+      1, // OSC2_XENV
+      127, // NOISE_VOL
+      4, // ENV_ATTACK
+      6, // ENV_SUSTAIN
+      35, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      0, // LFO_WAVEFORM
+      0, // LFO_AMT
+      0, // LFO_FREQ
+      0, // LFO_FX_FREQ
+      2, // FX_FILTER
+      14, // FX_FREQ
+      0, // FX_RESONANCE
+      10, // FX_DIST
+      32, // FX_DRIVE
+      0, // FX_PAN_AMT
+      0, // FX_PAN_FREQ
+      23, // FX_DELAY_AMT
+      1 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [1],
+      // Columns
+      c: [
+        {n: [142],
+         f: []}
+      ]
+    },
+  ],
+  rowLen: 200,   // In sample lengths
+  patternLen: 32,  // Rows per pattern
+  endPattern: 0,  // End pattern
+  numChannels: 1  // Number of channels
+};
+
+var ostia = {
+  songData: [
+    { // Instrument 0
+      i: [
+      2, // OSC1_WAVEFORM
+      40, // OSC1_VOL
+      140, // OSC1_SEMI
+      1, // OSC1_XENV
+      0, // OSC2_WAVEFORM
+      0, // OSC2_VOL
+      140, // OSC2_SEMI
+      0, // OSC2_DETUNE
+      1, // OSC2_XENV
+      255, // NOISE_VOL
+      5, // ENV_ATTACK
+      0, // ENV_SUSTAIN
+      48, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      0, // LFO_WAVEFORM
+      0, // LFO_AMT
+      0, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      2, // FX_FILTER
+      161, // FX_FREQ
+      192, // FX_RESONANCE
+      0, // FX_DIST
+      32, // FX_DRIVE
+      0, // FX_PAN_AMT
+      8, // FX_PAN_FREQ
+      71, // FX_DELAY_AMT
+      1 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [1],
+      // Columns
+      c: [
+        {n: [94],
+         f: []}
+      ]
+    },
+  ],
+  rowLen: 300,   // In sample lengths
+  patternLen: 32,  // Rows per pattern
+  endPattern: 0,  // End pattern
+  numChannels: 1  // Number of channels
+};
+
+var ostia_final = {
+  songData: [
+    { // Instrument 0
+      i: [
+      2, // OSC1_WAVEFORM
+      40, // OSC1_VOL
+      140, // OSC1_SEMI
+      1, // OSC1_XENV
+      0, // OSC2_WAVEFORM
+      0, // OSC2_VOL
+      140, // OSC2_SEMI
+      0, // OSC2_DETUNE
+      1, // OSC2_XENV
+      255, // NOISE_VOL
+      5, // ENV_ATTACK
+      0, // ENV_SUSTAIN
+      48, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      0, // LFO_WAVEFORM
+      0, // LFO_AMT
+      0, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      2, // FX_FILTER
+      161, // FX_FREQ
+      192, // FX_RESONANCE
+      0, // FX_DIST
+      32, // FX_DRIVE
+      0, // FX_PAN_AMT
+      8, // FX_PAN_FREQ
+      91, // FX_DELAY_AMT
+      10 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [1],
+      // Columns
+      c: [
+        {n: [94],
+         f: []}
+      ]
+    },
+  ],
+  rowLen: 5513,   // In sample lengths
+  patternLen: 32,  // Rows per pattern
+  endPattern: 0,  // End pattern
+  numChannels: 1  // Number of channels
+};
+
+var sirena = {
+  songData: [
+    { // Instrument 0
+      i: [
+      1, // OSC1_WAVEFORM
+      0, // OSC1_VOL
+      128, // OSC1_SEMI
+      0, // OSC1_XENV
+      1, // OSC2_WAVEFORM
+      0, // OSC2_VOL
+      128, // OSC2_SEMI
+      0, // OSC2_DETUNE
+      0, // OSC2_XENV
+      255, // NOISE_VOL
+      158, // ENV_ATTACK
+      100, // ENV_SUSTAIN
+      158, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      3, // LFO_WAVEFORM
+      67, // LFO_AMT
+      4, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      3, // FX_FILTER
+      57, // FX_FREQ
+      254, // FX_RESONANCE
+      85, // FX_DIST
+      171, // FX_DRIVE
+      88, // FX_PAN_AMT
+      1, // FX_PAN_FREQ
+      157, // FX_DELAY_AMT
+      2 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [1],
+      // Columns
+      c: [
+        {n: [106],
+         f: []}
+      ]
+    },
+  ],
+  rowLen: 5513,   // In sample lengths
+  patternLen: 32,  // Rows per pattern
+  endPattern: 0,  // End pattern
+  numChannels: 1  // Number of channels
+};
+var viento = {
+  songData: [
+    { // Instrument 0
+      i: [
+      0, // OSC1_WAVEFORM
+      0, // OSC1_VOL
+      140, // OSC1_SEMI
+      0, // OSC1_XENV
+      0, // OSC2_WAVEFORM
+      0, // OSC2_VOL
+      140, // OSC2_SEMI
+      0, // OSC2_DETUNE
+      0, // OSC2_XENV
+      255, // NOISE_VOL
+      158, // ENV_ATTACK
+      158, // ENV_SUSTAIN
+      158, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      0, // LFO_WAVEFORM
+      51, // LFO_AMT
+      2, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      2, // FX_FILTER
+      58, // FX_FREQ
+      239, // FX_RESONANCE
+      0, // FX_DIST
+      32, // FX_DRIVE
+      88, // FX_PAN_AMT
+      1, // FX_PAN_FREQ
+      21, // FX_DELAY_AMT
+      1 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [1,2],
+      // Columns
+      c: [
+        {n: [137,,,,135],
+         f: []},
+        {n: [],
+         f: []}
+      ]
+    },
+  ],
+  rowLen: 5513,   // In sample lengths
+  patternLen: 32,  // Rows per pattern
+  endPattern: 1,  // End pattern
+  numChannels: 1  // Number of channels
+};
+
+var menu = {
+  songData: [
+    { // Instrument 0
+      i: [
+      3, // OSC1_WAVEFORM
+      255, // OSC1_VOL
+      128, // OSC1_SEMI
+      0, // OSC1_XENV
+      1, // OSC2_WAVEFORM
+      154, // OSC2_VOL
+      128, // OSC2_SEMI
+      9, // OSC2_DETUNE
+      0, // OSC2_XENV
+      0, // NOISE_VOL
+      7, // ENV_ATTACK
+      5, // ENV_SUSTAIN
+      52, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      2, // LFO_WAVEFORM
+      131, // LFO_AMT
+      4, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      3, // FX_FILTER
+      255, // FX_FREQ
+      0, // FX_RESONANCE
+      0, // FX_DIST
+      32, // FX_DRIVE
+      47, // FX_PAN_AMT
+      3, // FX_PAN_FREQ
+      67, // FX_DELAY_AMT
+      2 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [1],
+      // Columns
+      c: [
+        {n: [152],
+         f: []}
+      ]
+    },
+  ],
+  rowLen: 100,   // In sample lengths
+  patternLen: 32,  // Rows per pattern
+  endPattern: 0,  // End pattern
+  numChannels: 1  // Number of channels
+};
+
+var menu_ok = {
+  songData: [
+    { // Instrument 0
+      i: [
+      3, // OSC1_WAVEFORM
+      255, // OSC1_VOL
+      128, // OSC1_SEMI
+      0, // OSC1_XENV
+      1, // OSC2_WAVEFORM
+      154, // OSC2_VOL
+      128, // OSC2_SEMI
+      9, // OSC2_DETUNE
+      0, // OSC2_XENV
+      0, // NOISE_VOL
+      7, // ENV_ATTACK
+      5, // ENV_SUSTAIN
+      52, // ENV_RELEASE
+      0, // ARP_CHORD
+      0, // ARP_SPEED
+      2, // LFO_WAVEFORM
+      131, // LFO_AMT
+      4, // LFO_FREQ
+      1, // LFO_FX_FREQ
+      3, // FX_FILTER
+      255, // FX_FREQ
+      0, // FX_RESONANCE
+      0, // FX_DIST
+      32, // FX_DRIVE
+      47, // FX_PAN_AMT
+      3, // FX_PAN_FREQ
+      124, // FX_DELAY_AMT
+      6 // FX_DELAY_TIME
+      ],
+      // Patterns
+      p: [1],
+      // Columns
+      c: [
+        {n: [152,144,147,152],
+         f: []}
+      ]
+    },
+  ],
+  rowLen: 2756,   // In sample lengths
+  patternLen: 32,  // Rows per pattern
+  endPattern: 0,  // End pattern
+  numChannels: 1  // Number of channels
+};</script>
+        <script>/* -*- mode: javascript; tab-width: 4; indent-tabs-mode: nil; -*-
+*
+* Copyright (c) 2011-2013 Marcus Geelnard
+*
+* This software is provided 'as-is', without any express or implied
+* warranty. In no event will the authors be held liable for any damages
+* arising from the use of this software.
+*
+* Permission is granted to anyone to use this software for any purpose,
+* including commercial applications, and to alter it and redistribute it
+* freely, subject to the following restrictions:
+*
+* 1. The origin of this software must not be misrepresented; you must not
+*    claim that you wrote the original software. If you use this software
+*    in a product, an acknowledgment in the product documentation would be
+*    appreciated but is not required.
+*
+* 2. Altered source versions must be plainly marked as such, and must not be
+*    misrepresented as being the original software.
+*
+* 3. This notice may not be removed or altered from any source
+*    distribution.
+*
+*/
+
+"use strict";
+
+var CPlayer = function() {
+
+    //--------------------------------------------------------------------------
+    // Private methods
+    //--------------------------------------------------------------------------
+
+    // Oscillators
+    var osc_sin = function (value) {
+        return Math.sin(value * 6.283184);
+    };
+
+    var osc_saw = function (value) {
+        return 2 * (value % 1) - 1;
+    };
+
+    var osc_square = function (value) {
+        return (value % 1) < 0.5 ? 1 : -1;
+    };
+
+    var osc_tri = function (value) {
+        var v2 = (value % 1) * 4;
+        if(v2 < 2) return v2 - 1;
+        return 3 - v2;
+    };
+
+    var getnotefreq = function (n) {
+        // 174.61.. / 44100 = 0.003959503758 (F3)
+        return 0.003959503758 * Math.pow(2, (n - 128) / 12);
+    };
+
+    var createNote = function (instr, n, rowLen) {
+        var osc1 = mOscillators[instr.i[0]],
+            o1vol = instr.i[1],
+            o1xenv = instr.i[3],
+            osc2 = mOscillators[instr.i[4]],
+            o2vol = instr.i[5],
+            o2xenv = instr.i[8],
+            noiseVol = instr.i[9],
+            attack = instr.i[10] * instr.i[10] * 4,
+            sustain = instr.i[11] * instr.i[11] * 4,
+            release = instr.i[12] * instr.i[12] * 4,
+            releaseInv = 1 / release,
+            arp = instr.i[13],
+            arpInterval = rowLen * Math.pow(2, 2 - instr.i[14]);
+
+        var noteBuf = new Int32Array(attack + sustain + release);
+
+        // Re-trig oscillators
+        var c1 = 0, c2 = 0;
+
+        // Local variables.
+        var j, j2, e, t, rsample, o1t, o2t;
+
+        // Generate one note (attack + sustain + release)
+        for (j = 0, j2 = 0; j < attack + sustain + release; j++, j2++) {
+            if (j2 >= 0) {
+                // Switch arpeggio note.
+                arp = (arp >> 8) | ((arp & 255) << 4);
+                j2 -= arpInterval;
+
+                // Calculate note frequencies for the oscillators
+                o1t = getnotefreq(n + (arp & 15) + instr.i[2] - 128);
+                o2t = getnotefreq(n + (arp & 15) + instr.i[6] - 128) * (1 + 0.0008 * instr.i[7]);
+            }
+
+            // Envelope
+            e = 1;
+            if (j < attack) {
+                e = j / attack;
+            } else if (j >= attack + sustain) {
+                e -= (j - attack - sustain) * releaseInv;
+            }
+
+            // Oscillator 1
+            t = o1t;
+            if (o1xenv) {
+                t *= e * e;
+            }
+            c1 += t;
+            rsample = osc1(c1) * o1vol;
+
+            // Oscillator 2
+            t = o2t;
+            if (o2xenv) {
+                t *= e * e;
+            }
+            c2 += t;
+            rsample += osc2(c2) * o2vol;
+
+            // Noise oscillator
+            if (noiseVol) {
+                rsample += (2 * Math.random() - 1) * noiseVol;
+            }
+
+            // Add to (mono) channel buffer
+            noteBuf[j] = (80 * rsample * e) | 0;
+        }
+
+        return noteBuf;
+    };
+
+
+    //--------------------------------------------------------------------------
+    // Private members
+    //--------------------------------------------------------------------------
+
+    // Array of oscillator functions
+    var mOscillators = [
+        osc_sin,
+        osc_square,
+        osc_saw,
+        osc_tri
+    ];
+
+    // Private variables set up by init()
+    var mSong, mLastRow, mCurrentCol, mNumWords, mMixBuf;
+
+
+    //--------------------------------------------------------------------------
+    // Initialization
+    //--------------------------------------------------------------------------
+
+    this.init = function (song) {
+        // Define the song
+        mSong = song;
+
+        // Init iteration state variables
+        mLastRow = song.endPattern;
+        mCurrentCol = 0;
+
+        // Prepare song info
+        mNumWords =  song.rowLen * song.patternLen * (mLastRow + 1) * 2;
+
+        // Create work buffer (initially cleared)
+        mMixBuf = new Int32Array(mNumWords);
+    };
+
+
+    //--------------------------------------------------------------------------
+    // Public methods
+    //--------------------------------------------------------------------------
+
+    // Generate audio data for a single track
+    this.generate = function () {
+        // Local variables
+        var i, j, b, p, row, col, n, cp,
+            k, t, lfor, e, x, rsample, rowStartSample, f, da;
+
+        // Put performance critical items in local variables
+        var chnBuf = new Int32Array(mNumWords),
+            instr = mSong.songData[mCurrentCol],
+            rowLen = mSong.rowLen,
+            patternLen = mSong.patternLen;
+
+        // Clear effect state
+        var low = 0, band = 0, high;
+        var lsample, filterequestAnimationFramective = false;
+
+        // Clear note cache.
+        var noteCache = [];
+
+         // Patterns
+         for (p = 0; p <= mLastRow; ++p) {
+            cp = instr.p[p];
+
+            // Pattern rows
+            for (row = 0; row < patternLen; ++row) {
+                // Execute effect command.
+                var cmdNo = cp ? instr.c[cp - 1].f[row] : 0;
+                if (cmdNo) {
+                    instr.i[cmdNo - 1] = instr.c[cp - 1].f[row + patternLen] || 0;
+
+                    // Clear the note cache since the instrument has changed.
+                    if (cmdNo < 16) {
+                        noteCache = [];
+                    }
+                }
+
+                // Put performance critical instrument properties in local variables
+                var oscLFO = mOscillators[instr.i[15]],
+                    lfoAmt = instr.i[16] / 512,
+                    lfoFreq = Math.pow(2, instr.i[17] - 9) / rowLen,
+                    fxLFO = instr.i[18],
+                    fxFilter = instr.i[19],
+                    fxFreq = instr.i[20] * 43.23529 * 3.141592 / 44100,
+                    q = 1 - instr.i[21] / 255,
+                    dist = instr.i[22] * 1e-5,
+                    drive = instr.i[23] / 32,
+                    panAmt = instr.i[24] / 512,
+                    panFreq = 6.283184 * Math.pow(2, instr.i[25] - 9) / rowLen,
+                    dlyAmt = instr.i[26] / 255,
+                    dly = instr.i[27] * rowLen & ~1;  // Must be an even number
+
+                // Calculate start sample number for this row in the pattern
+                rowStartSample = (p * patternLen + row) * rowLen;
+
+                // Generate notes for this pattern row
+                for (col = 0; col < 4; ++col) {
+                    n = cp ? instr.c[cp - 1].n[row + col * patternLen] : 0;
+                    if (n) {
+                        if (!noteCache[n]) {
+                            noteCache[n] = createNote(instr, n, rowLen);
+                        }
+
+                        // Copy note from the note cache
+                        var noteBuf = noteCache[n];
+                        for (j = 0, i = rowStartSample * 2; j < noteBuf.length; j++, i += 2) {
+                          chnBuf[i] += noteBuf[j];
+                        }
+                    }
+                }
+
+                // Perform effects for this pattern row
+                for (j = 0; j < rowLen; j++) {
+                    // Dry mono-sample
+                    k = (rowStartSample + j) * 2;
+                    rsample = chnBuf[k];
+
+                    // We only do effects if we have some sound input
+                    if (rsample || filterequestAnimationFramective) {
+                        // State variable filter
+                        f = fxFreq;
+                        if (fxLFO) {
+                            f *= oscLFO(lfoFreq * k) * lfoAmt + 0.5;
+                        }
+                        f = 1.5 * Math.sin(f);
+                        low += f * band;
+                        high = q * (rsample - band) - low;
+                        band += f * high;
+                        rsample = fxFilter == 3 ? band : fxFilter == 1 ? high : low;
+
+                        // Distortion
+                        if (dist) {
+                            rsample *= dist;
+                            rsample = rsample < 1 ? rsample > -1 ? osc_sin(rsample*.25) : -1 : 1;
+                            rsample /= dist;
+                        }
+
+                        // Drive
+                        rsample *= drive;
+
+                        // Is the filter active (i.e. still audiable)?
+                        filterequestAnimationFramective = rsample * rsample > 1e-5;
+
+                        // Panning
+                        t = Math.sin(panFreq * k) * panAmt + 0.5;
+                        lsample = rsample * (1 - t);
+                        rsample *= t;
+                    } else {
+                        lsample = 0;
+                    }
+
+                    // Delay is always done, since it does not need sound input
+                    if (k >= dly) {
+                        // Left channel = left + right[-p] * t
+                        lsample += chnBuf[k-dly+1] * dlyAmt;
+
+                        // Right channel = right + left[-p] * t
+                        rsample += chnBuf[k-dly] * dlyAmt;
+                    }
+
+                    // Store in stereo channel buffer (needed for the delay effect)
+                    chnBuf[k] = lsample | 0;
+                    chnBuf[k+1] = rsample | 0;
+
+                    // ...and add to stereo mix buffer
+                    mMixBuf[k] += lsample | 0;
+                    mMixBuf[k+1] += rsample | 0;
+                }
+            }
+        }
+
+        // Next iteration. Return progress (1.0 == done!).
+        mCurrentCol++;
+        return mCurrentCol / mSong.numChannels;
+    };
+
+    // Create a WAVE formatted Uint8Array from the generated audio data
+    this.createWave = function() {
+        // Create WAVE header
+        var headerLen = 44;
+        var l1 = headerLen + mNumWords * 2 - 8;
+        var l2 = l1 - 36;
+        var wave = new Uint8Array(headerLen + mNumWords * 2);
+        wave.set(
+            [82,73,70,70,
+             l1 & 255,(l1 >> 8) & 255,(l1 >> 16) & 255,(l1 >> 24) & 255,
+             87,65,86,69,102,109,116,32,16,0,0,0,1,0,2,0,
+             68,172,0,0,16,177,2,0,4,0,16,0,100,97,116,97,
+             l2 & 255,(l2 >> 8) & 255,(l2 >> 16) & 255,(l2 >> 24) & 255]
+        );
+
+        // Append actual wave data
+        for (var i = 0, idx = headerLen; i < mNumWords; ++i) {
+            // Note: We clamp here
+            var y = mMixBuf[i];
+            y = y < -32767 ? -32767 : (y > 32767 ? 32767 : y);
+            wave[idx++] = y & 255;
+            wave[idx++] = (y >> 8) & 255;
+        }
+
+        // Return the WAVE formatted typed array
+        return wave;
+    };
+
+    // Get n samples of wave data at time t [s]. Wave data in range [-2,2].
+    this.getData = function(t, n) {
+        var i = 2 * Math.floor(t * 44100);
+        var d = new Array(n);
+        for (var j = 0; j < 2*n; j += 1) {
+            var k = i + j;
+            d[j] = t > 0 && k < mMixBuf.length ? mMixBuf[k] / 32768 : 0;
+        }
+        return d;
+    };
+};
+</script>
+        <script>
+
+/**************************************************
+** GAME CLASS
+**************************************************/
+var Game = function() {
+
+
+    //-------------------------------------------------------------------------
+    // UTILITIES
+    //-------------------------------------------------------------------------
+
+    this.is_touch_device_ = function() {
+        return 'ontouchstart' in document.documentElement;
+    };
+
+    this.onkey_ = function(ev, key, down) {
+
+        if(!this.musica_sonando_){
+            w.musica_principal.play();
+            this.musica_sonando_ = true;
+        }
+
+        switch(key) {
+            case this.KEY_.LEFT:  
+                ev.preventDefault(); 
+                if(!this.empezado_){
+                    if(down){
+                        if(this.numero_jugadores_ && !this.player2_selected_){
+                            this.mueve_selec_player_(false, "left");
+                        }
+                    }
+                }
+                else{
+                    if(this.modo_ === 1){
+                        this.player_.left  = down; 
+                    }
+                    else{
+                        this.player2_.left  = down; 
+                    }
+                }
+                return false;
+            case this.KEY_.RIGHT: 
+                ev.preventDefault(); 
+                if(!this.empezado_){
+                    if(down){
+                        if(this.numero_jugadores_ && !this.player2_selected_){
+                            this.mueve_selec_player_(false, "right");
+                        }
+                    }
+                }
+                else{
+                    if(this.modo_ === 1){
+                        this.player_.right  = down; 
+                    }
+                    else{
+                        this.player2_.right  = down; 
+                    } 
+                } 
+                return false;
+            case this.KEY_.UP: 
+                ev.preventDefault(); 
+                if(!this.empezado_){
+                    if(down){
+                        if(!this.numero_jugadores_){
+                            this.mueve_menu_(false);
+                        }
+                        else if(!this.player2_selected_){
+                            this.mueve_selec_player_(false, "up");
+                        }
+                    }
+                }
+                else{
+                    if(this.modo_ === 1){
+                        this.player_.up  = down; 
+                    }
+                    else{
+                        this.player2_.up  = down; 
+                    } 
+                }
+                return false;
+            case this.KEY_.DOWN: 
+                ev.preventDefault(); 
+                if(!this.empezado_){
+                    if(down){
+                        if(!this.numero_jugadores_){
+                            this.mueve_menu_(true);
+                        }
+                        else if(!this.player2_selected_){
+                            this.mueve_selec_player_(false, "down");
+                        }
+                    }
+                }
+                else{
+                    if(this.modo_ === 1){
+                        this.player_.down  = down; 
+                    }
+                    else{
+                        this.player2_.down  = down; 
+                    }
+                }
+                return false;
+            case this.KEY_.ENTER: 
+                ev.preventDefault(); 
+                if(!this.empezado_){
+                    if(down){
+                        if(!this.numero_jugadores_){
+                            this.selecciona_menu_();
+                        }
+                        else{
+                            this.selec_player_(false);
+                        }
+                    }
+                }
+                else{
+                    if(this.modo_ === 1){
+                        this.player_.accion  = down; 
+                    }
+                    else{
+                        this.player2_.accion  = down; 
+                    }
+                }
+                return false;
+            case this.KEY_.SHIFT: 
+                ev.preventDefault(); 
+                if(this.empezado_){
+                    if(this.modo_ === 1){
+                        this.player_.jump_  = down; 
+                    }
+                    else{
+                        this.player2_.jump_  = down; 
+                    }
+                }
+                return false;
+            case this.KEY_.Z: 
+                ev.preventDefault(); 
+                if(!this.empezado_){
+                    if(down){
+                        if(!this.numero_jugadores_){
+                            this.selecciona_menu_();
+                        }
+                        else{
+                            this.selec_player_(true);
+                        }
+                    }
+                }
+                else{
+                    this.player_.accion  = down;  
+                }
+                return false;
+            case this.KEY_.X: 
+                ev.preventDefault(); 
+                if(this.empezado_){
+                    this.player_.jump_  = down; 
+                }
+                return false;
+            case this.KEY_.R: 
+                ev.preventDefault(); 
+                if(!this.empezado_){
+                    if(down){
+                        if(!this.numero_jugadores_){
+                            this.mueve_menu_(false);
+                        }
+                        else if(!this.player1_selected_){
+                            this.mueve_selec_player_(true, "up");
+                        }
+                    }
+                }
+                else{
+                    if(this.modo_ === 2){
+                        this.player_.up  = down; 
+                    }
+                }
+                return false;
+            case this.KEY_.D: 
+                ev.preventDefault(); 
+                if(!this.empezado_){
+                    if(down){
+                        if(this.numero_jugadores_ && !this.player1_selected_){
+                            this.mueve_selec_player_(true, "left");
+                        }
+                    }
+                }
+                else{
+                    if(this.modo_ === 2){
+                        this.player_.left  = down; 
+                    }
+                }
+                return false;
+            case this.KEY_.F: 
+                ev.preventDefault(); 
+                if(!this.empezado_){
+                    if(down){
+                        if(!this.numero_jugadores_){
+                            this.mueve_menu_(true);
+                        }
+                        else if(!this.player1_selected_){
+                            this.mueve_selec_player_(true, "down");
+                        }
+                    }
+                }
+                else{
+                    if(this.modo_ === 2){
+                        this.player_.down  = down; 
+                    }
+                }
+                return false;
+            case this.KEY_.G: 
+                ev.preventDefault();  
+                if(!this.empezado_){
+                    if(down){
+                        if(this.numero_jugadores_ && !this.player1_selected_){
+                            this.mueve_selec_player_(true, "right");
+                        }
+                    }
+                }
+                else{
+                    if(this.modo_ === 2){
+                        this.player_.right  = down; 
+                    }
+                }
+                return false;
+        }
+    };
+
+    this.timestamp_ = function() {
+        return new Date().getTime();
+    };
+
+    //Limite entre dos maximos
+    this.bound_ = function(x, min, max) {
+        return Math.max(min, Math.min(max, x));
+    };
+
+    //comprueba si algo esta dentro de algo
+    this.overlap_ = function(x1, y1, w1, h1, x2, y2, w2, h2) {
+        return !(((x1 + w1 - 1) < x2) ||
+                ((x2 + w2 - 1) < x1) ||
+                ((y1 + h1 - 1) < y2) ||
+                ((y2 + h2 - 1) < y1));
+    };
+
+
+
+    //Para pintar cosas por filas y columnas
+    this.pinta_filas_columnas_ = function(ctx, x, y, que_pintar, size, color, controla_distancia){
+        if(!color){
+            ctx.fillStyle = "#ffffff";
+        }
+        else{
+            ctx.fillStyle = color;
+        }
+
+        if(controla_distancia){
+            var new_color = this.hex_to_rgb_(color);
+        }
+
+        var currX = x;
+        var currY = y;
+        var addX = 0;
+        for (var i_y = 0; i_y < que_pintar.length; i_y++) {
+            var row = que_pintar[i_y];
+            for (var i_x = 0; i_x < row.length; i_x++) {
+                if (row[i_x]) {
+                    ctx.fillRect(currX + i_x * size, currY, size*1.1, size*1.1);
+                }
+            }
+            addX = Math.max(addX, row.length * size);
+            currY += size;
+        }
+        currX += size + addX;
+    };
+
+
+
+
+    /*** UPDATE ***/
+    //Funcion que se debe ejecutar cada frame
+    this.update_ = function(dt) {
+
+
+
+        if(this.is_game_over_){
+            return;
+        }
+
+        this.player_.update(dt);
+        this.player2_.update(dt);
+    };
+
+
+
+
+
+    this.empieza_ = function(){
+        
+        //TODO: parametrizar donde empiezan los jugadores
+
+        this.player_.x = 15;
+        this.player_.y = 100;
+        
+        if(this.modo_ == 1){
+            this.player2_.tipo_ = this.level_;
+            this.player2_.cambia_tipo_(this.level_);
+        }
+        this.player2_.x = this.ancho_total_ - this.player2_.ancho_ - 5;
+        this.player2_.y = 100;
+
+        this.fpsInterval_     = 1000 / 60;
+        //console.log(this.player2_);
+
+        this.hay_muerte_ = false;
+
+        this.tiempo_cuenta_atras_ = this.timestamp_() + 4000;
+
+        
+        this.suena_sirena_();
+        this.suena_viento_();
+
+    };
+
+
+    this.game_over_ = function(ctx) {
+        //TODO: Hacer algo mas guay si ganas
+        var game_over;
+        
+        if(this.ganador_ === "1_cpu"){
+            game_over = this.you_win_; 
+        }
+        else if(this.ganador_ === "cpu"){
+            game_over = this.you_lost_; 
+        }
+        else if(this.ganador_ === "1"){
+            game_over = this.p1_win_;
+        }
+        else if(this.ganador_ === "2"){
+            game_over = this.p2_win_;
+        }
+
+        this.pinta_filas_columnas_(ctx, this.ancho_total_/2 - 330, 250, game_over, this.marcador_size_ * 4);
+        
+        //this.is_game_over_ = true;
+
+    };
+
+    
+    this.pinta_play_again_ = function(ctx) {
+        
+        this.pinta_filas_columnas_(ctx, this.ancho_total_/2 - 170, this.alto_total_ - 100, this.play_again_ , this.marcador_size_ * 2);
+        
+        ctx.strokeStyle="#ffffff";
+        ctx.lineWidth=10;
+        ctx.strokeRect(this.ancho_total_/2 - 190, this.alto_total_ - 120, 400, 80);
+
+        document.getElementById("p_a").style.zIndex = 9;
+    };
+
+    this.siguiente_oponente_ = function(ctx){
+        this.pinta_filas_columnas_(ctx, this.ancho_total_/2 - 330, 250, this.you_win_, this.marcador_size_ * 4);
+
+        if(this.hay_siguiente_oponente_ && this.tiempo_siguiente_oponente_ < this.timestamp_()){
+            ++this.level_;
+            
+            this.select_cpu_ = true;
+            this.tiempo_select_cpu_ = this.timestamp_() + 6000;
+            this.empezado_ = false;
+            this.hay_siguiente_oponente_ = false;
+            this.muestra_menu_(ctx, true);
+        }
+        else if(!this.hay_siguiente_oponente_){
+            this.hay_siguiente_oponente_ = true;
+            this.tiempo_siguiente_oponente_ = this.timestamp_() + 3000;
+        }
+    }
+
+    //-------------------------------------------------------------------------
+    // RENDERING
+    //-------------------------------------------------------------------------
+  
+    this.render = function(ctx, frame, dt) {
+
+        //Si hay game over return y hago otra cosa -> TODO
+        if(this.is_game_over_){
+            return;
+        }
+
+        //Limpio lo que hay
+        //ctx.clearRect(0, 0, this.ancho_total_, this.alto_total_);
+
+        //Renderizo los objetos
+        this.render_paisaje_(ctx, dt);
+
+        //this.muestra_logo_(ctx);
+        
+        if(this.tiempo_cuenta_atras_ > this.timestamp_()){
+            this.pinta_cuenta_atras_(ctx);
+        }
+
+        this.render_cuerda_(ctx, dt);
+        this.render_edificios_cerca_(ctx, dt);
+        this.render_player_(ctx, dt);
+        this.render_player2_(ctx, dt);
+
+        this.render_ostiazo_(ctx, dt);
+        
+        
+    };
+
+    
+
+    this.render_player_ = function(ctx, dt) {
+        this.player_.pinta_vida_(ctx);
+        this.player_.pinta_player_(dt, ctx, this.counter_);
+    };
+
+  
+    this.render_player2_ = function(ctx, dt) {  
+        this.player2_.pinta_vida_(ctx);
+        this.player2_.pinta_player_(dt, ctx, this.counter_);    
+    };
+
+
+        
+
+    this.render_cuerda_ = function(ctx, dt) {
+        cuerda.render_(dt, ctx, this.counter_);
+    };
+        
+
+    this.render_edificios_cerca_ = function(ctx, dt) {
+        ctx.fillStyle= "#0a2830";
+        ctx.fillRect(0, this.alto_total_ /3 , 80, 1500);
+        ctx.fillRect(this.ancho_total_ - 80, this.alto_total_ / 3, 80, 1500);
+
+        ctx.fillStyle="#ffffff";
+        ctx.fillRect(0, this.alto_total_/2 - 50, 40, 100);
+        ctx.fillRect(0, this.alto_total_/2 + 100, 40, 100);
+        ctx.fillRect(0, this.alto_total_/2 + 250, 40, 100);
+
+        ctx.fillRect(this.ancho_total_ - 40, this.alto_total_/2 - 50, 40, 50);
+        ctx.fillRect(this.ancho_total_ - 40, this.alto_total_/2 + 30, 40, 50);
+        ctx.fillRect(this.ancho_total_ - 40, this.alto_total_/2 + 110, 40, 50);
+        ctx.fillRect(this.ancho_total_ - 40, this.alto_total_/2 + 190, 40, 50);
+        ctx.fillRect(this.ancho_total_ - 40, this.alto_total_/2 + 270, 40, 50);
+    };
+    
+    this.render_ostiazo_ = function(ctx, dt) {
+
+        while((this.ostia_actual_=this.ostiazos_.pop()) != null){ 
+            
+            ctx.save();
+            ctx.translate(this.ostia_actual_.x_translate_, this.ostia_actual_.y_translate_);
+
+            if(this.ostia_actual_.izquierda_){  
+                ctx.scale(-1, 1);
+            }
+
+            ctx.rotate(this.ostia_actual_.rotacion_);
+
+            this.pinta_filas_columnas_(ctx, this.ostia_actual_.x, this.ostia_actual_.y, this.ostia_actual_.que_ostia_, this.ostia_actual_.block_size_, this.ostia_actual_.color_);
+        
+            ctx.restore();
+        }
+
+    };
+
+    this.suena_sirena_ = function(){
+        var random = Math.random()*60000;
+        w.sirena_audio_.play();
+        var self = this;
+        setTimeout(function(){self.suena_sirena_()},random);
+    }
+
+    this.suena_viento_ = function(){
+        var random = Math.random()*30000;
+        w.viento_audio_.play();
+        var self = this;
+        setTimeout(function(){self.suena_viento_()},random);
+    }
+
+    this.render_paisaje_ = function(ctx, dt) {
+        
+        var varia = 0;
+        if(this.counter_){
+            varia = this.counter_/70;
+        }
+
+        var alto_luz = this.alto_total_/4 + varia;
+    
+
+        var grd=ctx.createLinearGradient(0, 0, 0 , alto_luz);
+        grd.addColorStop(0,"#aa92c9");
+        grd.addColorStop(1,"#ffbda2");
+        ctx.fillStyle=grd;
+        ctx.fillRect(0,0,this.ancho_total_,this.alto_total_);
+        
+        var x_sol = -350 + varia;
+        var y_sol = -150 + varia;
+        var w_sol = 60;
+        var h_sol_line = 15;
+        //SOL
+        var anchos = [8,14,16,18,20,22,23,24,25,26,27,27,28,29,29,29,30,30,30,30,29,29,29,28,27,27,26,25,24,23,22,20,18,16,14,8]
+
+        for (var i = 0; i < anchos.length; i++) {
+            y_sol = y_sol+6;
+            w_sol_now = anchos[i]*7.5;
+            x_sol_now  = this.ancho_total_/2 + x_sol - w_sol_now/2
+            
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(x_sol_now, this.alto_total_/3 + y_sol, w_sol_now, h_sol_line);
+            
+        }
+
+        //edificios
+        var color_lejos = "#ec8e9e";
+        var color_medio = "#cb6b8d";
+        var color_medio2 = "#904b6b";
+
+        ctx.fillStyle=color_lejos;
+        ctx.fillRect(5, this.alto_total_/2 - 200, 100, 1300);
+        ctx.fillRect(165, this.alto_total_/2 - 150, 80, 1320);
+        ctx.fillRect(350, this.alto_total_/2 - 130, 120, 1220);
+        ctx.fillRect(650, this.alto_total_/2 - 180, 160, 1320);
+        ctx.fillRect(850, this.alto_total_/2 - 50, 110, 1220);
+
+        
+        ctx.fillRect(1005, this.alto_total_/2 - 200, 100, 1300);
+        ctx.fillRect(1165, this.alto_total_/2 - 150, 90, 1320);
+        ctx.fillRect(1350, this.alto_total_/2 - 130, 120, 1220);
+        ctx.fillRect(1650, this.alto_total_/2 - 180, 160, 1320);
+        ctx.fillRect(1850, this.alto_total_/2 - 50, 110, 1220);
+
+        
+        ctx.fillStyle="rgba(255,255,255,0.5)";
+        for (j = 0; j < 20; j++) {
+            for (i = 0; i < 4; i++) {
+                if(this.random_array_[(i+1)*(j+1)]>0){
+                    ctx.fillRect(20 + i*20, this.alto_total_/2 - 180 + j*20, 10, 10);
+                    ctx.fillRect(370 + i*20, this.alto_total_/2 - 110 + j*20, 10, 10);
+                    ctx.fillRect(870 + i*20, this.alto_total_/2 - 30 + j*20, 10, 10);
+                    ctx.fillRect(1170 + i*20, this.alto_total_/2 - 140 + j*20, 10, 10);
+                    ctx.fillRect(1680 + i*20, this.alto_total_/2 - 160 + j*20, 10, 10);
+                }
+                if(this.random_array_[(i+1)*(j+1)*2]>0){
+                    ctx.fillRect(170 + i*20, this.alto_total_/2 - 140 + j*20, 10, 10);
+                    ctx.fillRect(680 + i*20, this.alto_total_/2 - 160 + j*20, 10, 10);
+                    ctx.fillRect(1020 + i*20, this.alto_total_/2 - 180 + j*20, 10, 10);
+                    ctx.fillRect(1370 + i*20, this.alto_total_/2 - 110 + j*20, 10, 10);
+                    ctx.fillRect(1870 + i*20, this.alto_total_/2 - 30 + j*20, 10, 10);  
+                }
+            }
+        }
+
+
+        ctx.fillStyle=color_medio;
+        ctx.fillRect(45, this.alto_total_/1.5 - 200, 150, 1300);
+        ctx.fillRect(235, this.alto_total_/1.5 - 150, 130, 1370);
+        ctx.fillRect(390, this.alto_total_/1.5 - 130, 180, 1290);
+        ctx.fillRect(590, this.alto_total_/1.5 - 180, 200, 1370);
+        ctx.fillRect(850, this.alto_total_/1.5 - 50, 180, 1250);
+
+        ctx.fillRect(1045, this.alto_total_/1.5 - 200, 200, 1350);
+        ctx.fillRect(1250, this.alto_total_/1.5 - 150, 130, 1370);
+        ctx.fillRect(1390, this.alto_total_/1.5 - 130, 180, 1310);
+        ctx.fillRect(1590, this.alto_total_/1.5 - 180, 200, 1370);
+        ctx.fillRect(1850, this.alto_total_/1.5 - 50, 180, 1250);
+
+        ctx.fillStyle="rgba(255,255,255,0.5)";
+        for (j = 0; j < 20; j++) {
+            for (i = 0; i < 5; i++) {
+                if(this.random_array_[(i+1)*(j+1)*3]>0){
+                    ctx.fillRect(65 + i*26, this.alto_total_/1.5 - 180 + j*26, 13, 13);
+                    ctx.fillRect(410 + i*26, this.alto_total_/1.5 - 110 + j*26, 13, 13);
+                    ctx.fillRect(870 + i*26, this.alto_total_/1.5 - 30 + j*26, 13, 13);
+                    ctx.fillRect(1255 + i*26, this.alto_total_/1.5 - 130 + j*26, 13, 13);
+                    ctx.fillRect(1610 + i*26, this.alto_total_/1.5 - 160 + j*26, 13, 13);
+                    ctx.fillRect(1870 + i*26, this.alto_total_/1.5 - 30 + j*26, 13, 13);
+                }
+                if(this.random_array_[(i+1)*(j+1)*4]>0){
+                    ctx.fillRect(255 + i*26, this.alto_total_/1.5 - 130 + j*26, 13, 13);
+                    ctx.fillRect(610 + i*26, this.alto_total_/1.5 - 160 + j*26, 13, 13);
+                    ctx.fillRect(1065 + i*26, this.alto_total_/1.5 - 180 + j*26, 13, 13);
+                    ctx.fillRect(1410 + i*26, this.alto_total_/1.5 - 110 + j*26, 13, 13);
+                    ctx.fillRect(1870 + i*26, this.alto_total_/1.5 - 30 + j*26, 13, 13);
+                    ctx.fillRect(2255 + i*26, this.alto_total_/1.5 - 130 + j*26, 13, 13);
+                }
+            }
+        }
+
+        
+        ctx.fillStyle=color_medio2;
+        ctx.fillRect(-25, this.alto_total_ - 200, 280, 1300);
+        ctx.fillRect(335, this.alto_total_ - 350, 260, 1370);
+        ctx.fillRect(640, this.alto_total_ - 180, 280, 1290);
+        ctx.fillRect(990, this.alto_total_ - 270, 300, 1370);
+        ctx.fillRect(1350, this.alto_total_ - 250, 380, 1250);
+        
+        ctx.fillRect(1105, this.alto_total_ - 200, 350, 1300);
+        ctx.fillRect(1335, this.alto_total_ - 350, 230, 1370);
+        ctx.fillRect(1640, this.alto_total_ - 180, 280, 1290);
+        ctx.fillRect(1990, this.alto_total_ - 270, 300, 1370);
+        ctx.fillRect(2350, this.alto_total_ - 250, 380, 1250);
+
+        
+        ctx.fillStyle="rgba(255,255,255,0.5)";
+        for (j = 0; j < 20; j++) {
+            for (i = 0; i < 6; i++) {
+                if(this.random_array_[(i+1)*(j+1)*5]>0){
+                    ctx.fillRect(-5 + i*44, this.alto_total_ - 180 + j*44, 22, 22);
+                    ctx.fillRect(1010 + i*44, this.alto_total_ - 250 + j*44, 22, 22);
+                }
+                if(this.random_array_[(i+1)*(j+1)*6]>0){
+                    ctx.fillRect(345 + i*44, this.alto_total_ - 330 + j*44, 22, 22);
+                    ctx.fillRect(1370 + i*44, this.alto_total_ - 230 + j*44, 22, 22);
+                }
+                if(this.random_array_[(i+1)*(j+1)*7]>0){
+                    ctx.fillRect(660 + i*44, this.alto_total_ - 160 + j*44, 22, 22);
+                }
+            }
+        }
+        
+           
+    };
+
+
+    // SCREEN SHACKE!
+
+    this.dx_shacke_ = 0;
+    this.dy_shacke_ = 0;
+
+    this.pre_shake_ = function() {
+        if(this.tiempo_shacke_ > this.timestamp_()){
+            this.ctx_.save();
+            if(!this.dx_shacke_ && !this.dy_shacke_){
+                this.dx_shacke_ = (Math.random() - 0.5) * this.intensidad_shacke_;
+                this.dy_shacke_ = (Math.random() - 0.5) * this.intensidad_shacke_;
+
+            }
+            else{
+                this.dy_shacke_ = this.dy_shacke_ * (-0.9);
+                this.dx_shacke_ = this.dx_shacke_ * (-0.9);
+            }
+            
+            this.ctx_.translate(this.dx_shacke_, this.dy_shacke_); 
+        }
+        else{
+                this.dx_shacke_ = 0;
+                this.dy_shacke_ = 0;
+
+        }
+    };
+
+    
+    this.post_shake_ = function() {
+        this.ctx_.restore();
+    };
+    
+    //FIN SCREEN SHACKE
+
+
+
+  
+
+
+
+    this.pinta_cuenta_atras_ = function(ctx) {
+        var numeros = []
+        
+        numeros[3] =  [
+                        [ 1, 1, 1, 1],
+                        [  ,  , 1, 1],
+                        [ 1, 1, 1, 1],
+                        [  ,  , 1, 1],
+                        [ 1, 1, 1, 1],
+                ];
+        numeros[2] =  [
+                        [ 1, 1, 1, 1],
+                        [ 1, 1, 1, 1],
+                        [  ,  , 1, 1],
+                        [ 1, 1, 1,  ],
+                        [ 1, 1, 1, 1],
+                ];
+        numeros[1] =  [
+                        [  ,  , 1, 1],
+                        [  ,  , 1, 1],
+                        [  ,  , 1, 1],
+                        [  ,  , 1, 1],
+                        [  ,  , 1, 1],
+                ];
+        numeros[0] =  [
+                        [ 1, 1, 1, 1,  , 1, 1,  , 1, 1, 1, 1, 1,  , 1,  , 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1, 1],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1, 1,  ,  ,  ,  , 1,  , 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1, 1],
+                        [ 1, 1, 1, 1,  , 1, 1,  , 1, 1,  , 1, 1,  , 1, 1, 1, 1,  ,  , 1, 1,  ,  , 1, 1,  , 1, 1],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1, 1,  ,  , 1,  , 1,  , 1, 1,  ,  , 1, 1,  ,  ,  ,  ,  ,  ,  ],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1, 1, 1, 1, 1,  , 1,  , 1, 1,  ,  , 1, 1,  ,  , 1, 1,  , 1, 1],
+                ];
+        
+
+        this.numero_decimal_ = (this.tiempo_cuenta_atras_- this.timestamp_())/1000;
+        this.numero_ = Math.floor(this.numero_decimal_);
+
+        var size_cuenta_atras = 8 * (2 + this.numero_ - this.numero_decimal_);
+        var x_logo = this.ancho_total_/2 - (size_cuenta_atras * numeros[this.numero_][1].length)/2;
+        var y_logo = this.alto_total_/4;
+        
+        this.pinta_filas_columnas_(ctx, x_logo, y_logo, numeros[this.numero_], size_cuenta_atras);
+
+        if(this.modo_ == 1){
+            this.pinta_filas_columnas_(ctx, this.player_.x + this.player_.ancho_/2, this.player_.y - 50, this.p1 , 3, this.colors_1_2_[1]);
+            this.pinta_filas_columnas_(ctx, this.player_.x + this.player_.ancho_/2 + 5, this.player_.y - 30, this.triangulin_ , 3, this.colors_1_2_[1]);
+        }
+        else{
+            this.pinta_filas_columnas_(ctx, this.player_.x + this.player_.ancho_/2, this.player_.y - 50, this.p1 , 3, this.colors_1_2_[1]);
+            this.pinta_filas_columnas_(ctx, this.player_.x + this.player_.ancho_/2 + 5, this.player_.y - 30, this.triangulin_ , 3, this.colors_1_2_[1]);
+
+            this.pinta_filas_columnas_(ctx, this.player2_.x + this.player2_.ancho_/2 - 15, this.player2_.y - 50, this.p2 , 3, this.colors_1_2_[2]);
+            this.pinta_filas_columnas_(ctx, this.player2_.x + this.player2_.ancho_/2 - 10, this.player2_.y - 30, this.triangulin_ , 3, this.colors_1_2_[2]);
+
+        }
+        
+    };
+  
+
+
+
+    this.muestra_logo_ = function(ctx) {
+        
+        var logo =  [
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1, 1, 1,  ,  , 1, 1,  ,  ,  , 1, 1,  , 1, 1,  ,  , 1,  , 1, 1, 1, 1],
+                        [ 1, 1,  , 1,  , 1, 1,  ,  ,  , 1, 1,  ,  ,  ,  ,  ,  , 1, 1,  ,  , 1, 1,  , 1,  , 1, 1,  ,  ,  ,  , 1, 1,  ,  ,  ,  ,  ,  , 1, 1, 1,  , 1,  , 1, 1,  ,  ],
+                        [ 1, 1,  , 1,  , 1, 1, 1,  ,  , 1, 1, 1,  ,  ,  ,  ,  , 1, 1,  ,  , 1, 1, 1, 1,  , 1, 1, 1,  ,  ,  , 1, 1,  ,  ,  , 1, 1,  , 1, 1,  , 1, 1,  , 1, 1, 1,  ],
+                        [ 1, 1,  , 1,  , 1, 1,  ,  ,  , 1, 1,  ,  ,  ,  ,  ,  , 1, 1,  ,  , 1, 1,  , 1,  , 1, 1,  ,  ,  ,  , 1, 1,  ,  ,  , 1, 1,  , 1, 1,  ,  , 1,  , 1, 1,  ,  ],
+                        [ 1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1,  ,  ,  ,  ,  ,  , 1, 1,  ,  , 1, 1,  , 1,  , 1, 1, 1, 1,  ,  , 1, 1, 1, 1,  , 1, 1,  , 1, 1,  ,  , 1,  , 1, 1, 1, 1],
+                ];
+
+        var size_logo_px = 8;
+        var x_logo = this.ancho_total_/2 - (size_logo_px * logo[0].length)/2;
+        var y_logo = this.alto_total_/4;
+
+        //this.render_paisaje_(ctx);
+        this.pinta_filas_columnas_(ctx, x_logo, y_logo, logo, size_logo_px);
+        
+    };
+
+
+    //Pinto un cargador muy simple
+    //TODO: hacerlo bonito
+    this.pinta_cargador_ = function(percent, ctx) {
+
+        if(w.innerWidth < 820){
+            this.ancho_total_ = w.innerWidth * 2,
+            this.alto_total_  = w.innerHeight * 2;
+
+        }
+        else{
+            this.ancho_total_ = w.innerWidth,
+            this.alto_total_  = w.innerHeight;
+        }
+        
+        this.canvas_.width  = this.ancho_total_;
+        this.canvas_.height = this.alto_total_;
+
+        
+        this.render_paisaje_(ctx);
+        
+        ctx.fillStyle = "#ffffff";
+        var ancho_cargador = 200;
+        var alto_cargador = 80;
+        ctx.fillRect((this.ancho_total_ - ancho_cargador)/2, this.alto_total_/2 + 50, percent * ancho_cargador, alto_cargador);
+
+        ctx.strokeStyle="#ffffff";
+        ctx.lineWidth=10;
+        ctx.strokeRect((this.ancho_total_ - ancho_cargador)/2, this.alto_total_/2 + 50, ancho_cargador - 5, alto_cargador);
+
+        
+        this.muestra_logo_(this.ctx_);
+    };
+
+
+    this.muestra_menu_ = function(ctx, select_player) {
+        
+        //Si es movil... lanzo el juego directamente (con modo = 1... 1player)
+        
+        if(this.is_touch_device_() && !select_player){   
+            this.modo_ = 1;
+            this.modo_seleccionado_ = true;
+        }
+        
+        if(w.innerWidth < 820){
+            this.ancho_total_ = w.innerWidth * 2,
+            this.alto_total_  = w.innerHeight * 2;
+
+        }
+        else{
+            this.ancho_total_ = w.innerWidth,
+            this.alto_total_  = w.innerHeight;
+        }
+        
+        this.canvas_.width  = this.ancho_total_;
+        this.canvas_.height = this.alto_total_;
+        
+        //ctx.clearRect(0, 0, this.ancho_total_, this.alto_total_);
+
+        
+        
+        
+        this.render_paisaje_(ctx);
+        
+        //Mestro el menu de 1 this.player_ / 2 this.player_
+
+        //TODO: optimizar estos arrays gordisimos
+        menu1 =  [
+                    [  , 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1,  ,  , 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1,  ,  ,  ,  ,  ],
+                    [ 1, 1, 1,  ,  ,  , 1, 1,  , 1,  , 1, 1,  ,  ,  , 1, 1,  , 1,  ,  , 1, 1,  ,  , 1, 1,  ,  ,  , 1, 1,  , 1,  ,  ,  ,  ,  ],
+                    [  , 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  , 1, 1,  ,  , 1, 1, 1,  ,  , 1, 1,  , 1,  ,  ,  ,  ,  ],
+                    [  , 1, 1,  ,  ,  , 1, 1,  ,  ,  , 1, 1,  ,  ,  , 1, 1,  , 1,  ,  , 1, 1,  ,  , 1, 1,  ,  ,  , 1, 1, 1,  ,  ,  ,  ,  ,  ],
+                    [ 1, 1, 1, 1,  ,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1, 1,  , 1,  ,  , 1, 1,  ,  , 1, 1, 1, 1,  , 1, 1,  , 1,  ,  ,  ,  ,  ],
+                ];
+        menu2 =  [           
+                    [ 1, 1, 1, 1,  ,  , 1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1,  ,  , 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1],
+                    [  ,  , 1, 1,  ,  , 1, 1,  , 1,  , 1, 1,  ,  ,  , 1, 1,  , 1,  ,  , 1, 1,  ,  , 1, 1,  ,  ,  , 1, 1,  , 1,  , 1, 1,  ,  ],
+                    [ 1, 1, 1, 1,  ,  , 1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  , 1, 1,  ,  , 1, 1, 1,  ,  , 1, 1,  , 1,  , 1, 1, 1, 1],
+                    [ 1, 1,  ,  ,  ,  , 1, 1,  ,  ,  , 1, 1,  ,  ,  , 1, 1,  , 1,  ,  , 1, 1,  ,  , 1, 1,  ,  ,  , 1, 1, 1,  ,  ,  ,  , 1, 1],
+                    [ 1, 1, 1, 1,  ,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1, 1,  , 1,  ,  , 1, 1,  ,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1, 1, 1]
+            ];
+
+        
+
+        // Cuando esta todo seleccionado, cambio el empieza y deberia rular
+        var size_menu_px = 8;
+        var largo_menu = size_menu_px * menu1[0].length;
+        var largo_menu = size_menu_px * menu1[0].length;
+        var x_menu = this.ancho_total_/2 - largo_menu/2;
+        var y_menu = this.alto_total_/4;
+
+
+        
+        ctx.globalAlpha = 0.6;
+        ctx.fillStyle = "#000000";
+        
+        ctx.fillRect(0,0,this.ancho_total_,this.alto_total_);
+        ctx.globalAlpha = 1;
+        
+
+        // Si es menu de seleccionar jugador...
+        // pinto el seleccionar jugador
+        if(select_player){
+            
+            //Me creo una instacia de jugador falso para pintar el jugador en el menu
+
+            //TODO: Cambiar esto... pintar la cara de cada jugador...
+            var size_caract = 6;
+
+            this.x_selector_player_1_ = this.ancho_total_ / 2.3 - 6*35;
+            this.y_selector_player_1_ = this.alto_total_ / 4;
+            
+            this.x_selector_player_2_ = this.ancho_total_ / 2.3 + 6*35;
+            this.y_selector_player_2_ = this.alto_total_ / 1.8;
+
+            var fake_player = new Player(this, this.x_selector_player_1_ - 85, this.y_selector_player_1_ + 10, 0, 60000, 1, false, 1, 4);
+
+            if(this.level_ > 1){
+                fake_player.estoy_muerto_ = true;
+            }
+
+            fake_player.pinta_player_(0, ctx, this.counter_);
+
+            var caracteristicas1 =  [
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1,  , 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1,  ,  , 1, 1, 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  , 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1,  , 1, 1,  , 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1, 1,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [  ,  ,  , 1,  , 1, 1,  ,  ,  , 1, 1,  , 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                        [ 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  , 1, 1,  , 1, 1,  , 1,  , 1, 1, 1, 1, 1, 1,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [  ,  , 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1,  , 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                ];
+            this.pinta_filas_columnas_(ctx, this.x_selector_player_1_, this.y_selector_player_1_, caracteristicas1, size_caract);
+            
+            var fake_player2 = new Player(this, this.x_selector_player_1_ - 85, this.y_selector_player_2_ + 10, 0, 60000, 1, false, 3, 4);
+            if(this.level_ > 3){
+                fake_player2.estoy_muerto_ = true;
+            }
+            fake_player2.pinta_player_(0, ctx, this.counter_);
+
+            var caracteristicas2 =  [
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1,  , 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  , 1,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1,  ,  , 1, 1, 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  , 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1,  , 1, 1,  , 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1, 1,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  , 1,  , 1, 1,  ,  ,  , 1, 1,  , 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                        [ 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  , 1, 1,  , 1, 1,  , 1,  , 1, 1, 1, 1, 1, 1,  , 1,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [  ,  , 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1,  , 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  , 1,  ,  , 1, 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                ];
+                
+            this.pinta_filas_columnas_(ctx, this.x_selector_player_1_, this.y_selector_player_2_, caracteristicas2, size_caract);
+            
+            var fake_player3 = new Player(this, this.x_selector_player_2_ - 85, this.y_selector_player_1_ + 10, 0, 60000, 1, false, 2, 4);
+            if(this.level_ > 2){
+                fake_player3.estoy_muerto_ = true;
+            }
+            fake_player3.pinta_player_(0, ctx, this.counter_);
+
+            var caracteristicas3 =  [
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1,  , 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  , 1,  ,  , 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1,  ,  , 1, 1, 1, 1,  ,  , 1,  ,  , 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  , 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1,  , 1, 1,  , 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1, 1,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  , 1],
+                        [  ,  ,  , 1,  , 1, 1,  ,  ,  , 1, 1,  , 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                        [ 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  , 1, 1,  , 1, 1,  , 1,  , 1, 1, 1, 1, 1, 1,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  , 1],
+                        [  ,  , 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  , 1],
+                        [ 1,  , 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                ];
+            this.pinta_filas_columnas_(ctx, this.x_selector_player_2_, this.y_selector_player_1_, caracteristicas3, size_caract);
+
+
+            var fake_player4 = new Player(this, this.x_selector_player_2_ - 85, this.y_selector_player_2_ + 10, 0, 60000, 1, false, 4, 4);
+            fake_player4.pinta_player_(0, ctx, this.counter_);
+
+            var caracteristicas4 =  [
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1,  , 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1,  ,  , 1, 1, 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  , 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [ 1, 1,  ,  ,  , 1, 1,  , 1,  , 1, 1,  , 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1, 1,  ,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [  ,  ,  , 1,  , 1, 1,  ,  ,  , 1, 1,  , 1, 1,  ,  , 1,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                        [ 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  , 1, 1,  , 1, 1,  , 1,  , 1, 1, 1, 1, 1, 1,  , 1,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [  ,  , 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1,  , 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1,  , 1,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  , 1],
+                        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                        [  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ,  ],
+                ];
+            this.pinta_filas_columnas_(ctx, this.x_selector_player_2_, this.y_selector_player_2_, caracteristicas4, size_caract);
+
+
+        }
+        
+
+
+        if(!this.is_touch_device_()){
+            //Pinto la ayuda de teclas...
+            var usa_keys  =  [
+                        [  1, 1,  , 1,  ,  1, 1, 1,  , 1,  , 1,  , 1, 1, 1,  ,  ],
+                        [  1, 1, 1,  ,  ,  1, 1,  ,  ,  , 1,  ,  , 1,  ,  ,  , 1],
+                        [  1, 1,  ,  ,  ,  1, 1, 1,  ,  , 1,  ,  , 1, 1, 1,  ,  ],
+                        [  1, 1, 1,  ,  ,  1, 1,  ,  ,  , 1,  ,  ,  ,  , 1,  , 1],
+                        [  1, 1,  , 1,  ,  1, 1, 1,  ,  , 1,  ,  , 1, 1, 1,  ,  ], 
+                ];
+
+            
+            var zeta=  [
+                        [ 1, 1, 1, 1, ],
+                        [  ,  ,  , 1, ],
+                        [  ,  , 1,  , ],
+                        [  , 1,  ,  , ],
+                        [ 1, 1, 1, 1, ]
+                ];
+            var equis=  [
+                        [ 1,  ,  ,  ,1],
+                        [  , 1,  , 1, ],
+                        [  ,  , 1,  , ],
+                        [  , 1,  , 1, ],
+                        [ 1,  ,  ,  ,1]
+                ];
+            var erre=  [
+                        [ 1, 1, 1, 1, ],
+                        [ 1,  ,  , 1, ],
+                        [ 1,  , 1,  , ],
+                        [ 1, 1, 1,  , ],
+                        [ 1,  ,  , 1, ]
+                ];
+            var de=  [
+                        [ 1, 1, 1, 1, ],
+                        [ 1,  ,  , 1, ],
+                        [ 1,  ,  , 1, ],
+                        [ 1,  ,  , 1, ],
+                        [ 1, 1, 1,  , ]
+                ];
+            var efe=  [
+                        [ 1, 1, 1, 1, ],
+                        [ 1,  ,  ,  , ],
+                        [ 1, 1, 1,  , ],
+                        [ 1,  ,  ,  , ],
+                        [ 1,  ,  ,  , ]
+                ];
+            var ge=  [
+                        [ 1, 1, 1, 1, ],
+                        [ 1,  ,  ,  , ],
+                        [ 1,  , 1, 1, ],
+                        [ 1,  ,  , 1, ],
+                        [ 1, 1, 1, 1, ]
+                ];
+            var enter_key=  [
+                        [  ,  ,  , 1, ],
+                        [  ,  ,  , 1, ],
+                        [  , 1,  , 1, ],
+                        [ 1, 1, 1, 1, ],
+                        [  , 1,  ,  , ]
+                ];
+            var shift_key=  [
+                        [  ,  ,  , 1,  ,  ,  ],
+                        [  ,  , 1,  , 1,  ,  ],
+                        [  , 1,  ,  ,  , 1,  ],
+                        [ 1, 1, 1,  , 1, 1, 1],
+                        [  ,  , 1, 1, 1,  ,  ]
+                ];
+
+
+            var size_flecha_px = 3;
+
+
+            this.pinta_filas_columnas_(ctx, 50, this.alto_total_ - 130, usa_keys, 3);
+            var y_select = y_menu - (size_menu_px * 4);
+            if(this.modo_ == 2){
+                y_select = y_select + size_menu_px * 14;
+
+
+                //size_flecha_px = size_flecha_px/2;
+                this.pinta_filas_columnas_(ctx, 50, this.alto_total_ - 50, de, size_flecha_px);
+                this.pinta_filas_columnas_(ctx, 105, this.alto_total_ - 50, ge, size_flecha_px);
+                this.pinta_filas_columnas_(ctx, 80, this.alto_total_ - 75, erre, size_flecha_px);
+                this.pinta_filas_columnas_(ctx, 80, this.alto_total_ - 50, efe, size_flecha_px);
+                this.pinta_filas_columnas_(ctx, 160, this.alto_total_ - 50, zeta, size_flecha_px);
+                this.pinta_filas_columnas_(ctx, 200, this.alto_total_ - 50, equis, size_flecha_px);
+
+
+                this.pinta_filas_columnas_(ctx, this.ancho_total_ - 220, this.alto_total_ - 50, this.flecha_izq, size_flecha_px*1.5);
+                this.pinta_filas_columnas_(ctx, this.ancho_total_ - 155, this.alto_total_ - 50, this.flecha_der, size_flecha_px*1.5);
+                this.pinta_filas_columnas_(ctx, this.ancho_total_ - 190, this.alto_total_ - 70, this.flecha_arr, size_flecha_px*1.5);
+                this.pinta_filas_columnas_(ctx, this.ancho_total_ - 190, this.alto_total_ - 45, this.flecha_abj_, size_flecha_px*1.5);
+                this.pinta_filas_columnas_(ctx, this.ancho_total_ - 100, this.alto_total_ - 55, enter_key, size_flecha_px*2);
+                this.pinta_filas_columnas_(ctx, this.ancho_total_ - 60, this.alto_total_ - 50, shift_key, size_flecha_px*1.3);
+            }
+            else{
+
+                this.pinta_filas_columnas_(ctx, this.ancho_total_/2 - 90, this.alto_total_ - 50, this.flecha_izq, size_flecha_px*1.8);
+                this.pinta_filas_columnas_(ctx, this.ancho_total_/2 + 5, this.alto_total_ - 50, this.flecha_der, size_flecha_px*1.8);
+                this.pinta_filas_columnas_(ctx, this.ancho_total_/2 - 45, this.alto_total_ - 80, this.flecha_arr, size_flecha_px*1.8);
+                this.pinta_filas_columnas_(ctx, this.ancho_total_/2 - 45, this.alto_total_ - 45, this.flecha_abj_, size_flecha_px*1.8);
+                this.pinta_filas_columnas_(ctx, this.ancho_total_/2 + 75, this.alto_total_ - 50, zeta, size_flecha_px*1.5);
+                this.pinta_filas_columnas_(ctx, this.ancho_total_/2 + 125, this.alto_total_ - 50, equis, size_flecha_px*1.5);
+
+            }
+
+        }
+
+        ctx.lineWidth=10;
+        if(!select_player){
+            
+            ctx.strokeStyle="#ffffff";
+            ctx.strokeRect(x_menu - (size_menu_px * 4), y_select, largo_menu + (size_menu_px * 8), 12 * size_menu_px);
+            this.pinta_filas_columnas_(ctx, x_menu, y_menu, menu1, size_menu_px);
+            this.pinta_filas_columnas_(ctx, x_menu, y_menu + 110, menu2, size_menu_px);
+        }
+        else{
+
+            if(this.modo_ === 2 || this.select_cpu_){
+                
+                var que_pinta2 = this.p2;
+                var suena = false;
+                if(this.select_cpu_){
+                    var que_pinta2 = this.cpu_;
+                    var diff_select_cpu = this.tiempo_select_cpu_ - this.timestamp_();
+                    if(this.ultimo_select_cpu_ < this.timestamp_()){
+                        this.player2_tipo_ = Math.floor(Math.random()*(5 - this.level_)) + this.level_;
+                        
+                        this.ultimo_select_cpu_ = this.timestamp_() + 150 - ((3000-diff_select_cpu)/100);
+                        suena = true;
+                    }
+                    if(diff_select_cpu < 0){
+                        this.player2_tipo_ = this.level_;
+                        suena = false;
+                        w.menu_ok_audio_.play();
+                        if(diff_select_cpu < -2000){
+                            //console.log("empieza aqui otra vez?")
+                            this.setup_();
+                            this.empieza_();
+                            this.empezado_ = true;
+                            
+                        }
+                    }
+                    if(suena){
+                        w.menu_audio_.play();
+                    }
+                    
+
+
+                }
+                
+
+                var x_selec_player = this.x_selector_player_1_ - 120;
+                var y_selec_player = this.y_selector_player_1_  - 20;
+                
+                if(this.level_>1){
+                    
+                    this.ctx_.globalAlpha = 0.4;
+                    this.ctx_.fillStyle = "#000000";
+
+                    this.ctx_.fillRect(x_selec_player, y_selec_player, this.ancho_selec_player_, this.alto_selec_player_);
+                    
+                    if(this.level_>2){
+                        this.ctx_.fillRect(this.x_selector_player_2_ - 120, y_selec_player, this.ancho_selec_player_, this.alto_selec_player_);
+                    }
+                    if(this.level_>3){
+                        this.ctx_.fillRect(x_selec_player, this.y_selector_player_2_  - 20, this.ancho_selec_player_, this.alto_selec_player_);
+                    }
+
+                    this.ctx_.globalAlpha = 1.0;
+                }
+
+                switch(this.player2_tipo_) {
+                    case 2: 
+                        x_selec_player = this.x_selector_player_2_ - 120;
+                        y_selec_player = this.y_selector_player_1_  - 20;
+                        break;
+                    case 3: 
+                        x_selec_player = this.x_selector_player_1_ - 120;
+                        y_selec_player = this.y_selector_player_2_  - 20;
+                        break;
+                    case 4: 
+                        x_selec_player = this.x_selector_player_2_ - 120;
+                        y_selec_player = this.y_selector_player_2_  - 20;
+                        break;
+                }
+
+                
+
+                var x_p2 = x_selec_player + 320;
+                var y_p2 = y_selec_player - 30;
+                this.pinta_filas_columnas_(ctx, x_p2, y_p2, que_pinta2, 4, this.colors_1_2_[2]);
+                ctx.strokeStyle = this.colors_1_2_[2];
+                ctx.strokeRect(x_selec_player, y_selec_player, this.ancho_selec_player_, this.alto_selec_player_);
+                if(this.player2_selected_){
+                    this.ctx_.globalAlpha = 0.5;
+                    this.ctx_.fillStyle = this.colors_1_2_[2];
+                    this.ctx_.fillRect(x_selec_player, y_selec_player, this.ancho_selec_player_, this.alto_selec_player_);
+                    this.ctx_.globalAlpha = 1.0;
+                }
+            }
+
+            var x_selec_player = this.x_selector_player_1_ - 120;
+            var y_selec_player = this.y_selector_player_1_  - 20;
+
+            switch(this.player1_tipo_) {
+                case 2: 
+                    x_selec_player = this.x_selector_player_2_ - 120;
+                    y_selec_player = this.y_selector_player_1_  - 20;
+                    break;
+                case 3: 
+                    x_selec_player = this.x_selector_player_1_ - 120;
+                    y_selec_player = this.y_selector_player_2_  - 20;
+                    break;
+                case 4: 
+                    x_selec_player = this.x_selector_player_2_ - 120;
+                    y_selec_player = this.y_selector_player_2_  - 20;
+                    break;
+            }
+            
+            var x_p1 = x_selec_player + 15;
+            var y_p1 = y_selec_player - 30;
+
+            this.pinta_filas_columnas_(ctx, x_p1, y_p1, this.p1, 4, this.colors_1_2_[1]);
+            ctx.strokeStyle = this.colors_1_2_[1];
+            ctx.strokeRect(x_selec_player, y_selec_player, this.ancho_selec_player_, this.alto_selec_player_);
+
+
+            if(this.player1_selected_){
+                this.ctx_.globalAlpha = 0.5;
+                this.ctx_.fillStyle = this.colors_1_2_[1];
+                this.ctx_.fillRect(x_selec_player, y_selec_player, this.ancho_selec_player_, this.alto_selec_player_);
+                this.ctx_.globalAlpha = 1.0;
+            }
+
+
+        }
+
+
+    };
+
+    this.mueve_menu_ = function (abajo) {
+
+        //aal moverme por el menu, hago sonar un sonidico
+        w.menu_audio_.play();
+
+        //cambio el modo
+        if(abajo){
+            this.modo_ = 2;
+        }
+        else{
+            this.modo_ = 1;
+        }
+    }
+
+    this.mueve_selec_player_ = function (player1, dir) {
+
+        w.menu_audio_.play();
+        if(player1 || this.modo_ == 1){
+            switch(dir) {
+                case "up":  
+                    if(this.player1_tipo_ > 2){
+                        this.player1_tipo_ = this.player1_tipo_ - 2;
+                    }
+                    break;
+                case "down":  
+                    if(this.player1_tipo_ < 3){
+                        this.player1_tipo_ = this.player1_tipo_ + 2;
+                    }
+                    break;
+                case "left":  
+                    if(this.player1_tipo_ === 2 || this.player1_tipo_ === 4){
+                        this.player1_tipo_ = this.player1_tipo_ - 1;
+                    }
+                    break;
+                case "right":  
+                    if(this.player1_tipo_ === 1 || this.player1_tipo_ === 3){
+                        this.player1_tipo_ = this.player1_tipo_ + 1;
+                    }
+                    break;
+            }
+        }
+        else{
+            switch(dir) {
+                case "up":  
+                    if(this.player2_tipo_ > 2){
+                        this.player2_tipo_ = this.player2_tipo_ - 2;
+                    }
+                    break;
+                case "down":  
+                    if(this.player2_tipo_ < 3){
+                        this.player2_tipo_ = this.player2_tipo_ + 2;
+                    }
+                    break;
+                case "left":  
+                    if(this.player2_tipo_ === 2 || this.player2_tipo_ === 4){
+                        this.player2_tipo_ = this.player2_tipo_ - 1;
+                    }
+                    break;
+                case "right":  
+                    if(this.player2_tipo_ === 1 || this.player2_tipo_ === 3){
+                        this.player2_tipo_ = this.player2_tipo_ + 1;
+                    }
+                    break;
+            }
+
+        }
+    }
+
+    this.selecciona_menu_ = function () {
+        
+        w.menu_ok_audio_.play();
+        this.modo_seleccionado_ = true;
+        this.numero_jugadores_ = this.modo_;
+
+        //this.setup_();
+        //this.empieza_(true);
+        //this.empezado_ = true;
+    }
+
+    this.selec_player_ = function (player1) {
+        
+        w.menu_ok_audio_.currentTime = 0; 
+        w.menu_ok_audio_.play();
+        if(!player1 && this.player2_selected_){
+            return;
+        }
+        else if(player1 && this.player1_selected_){
+            return;
+        }
+        
+        if(!player1){
+            this.player2_selected_ = true;
+            player_pinta_ = this.player2_tipo_;
+            color = this.colors_1_2_[2];
+        }
+        else{
+            this.player1_selected_ = true;
+        }
+
+        //TODO: Hacer algun tipo de delay para no entrar a lo loco a la partida
+        if(this.modo_ === 1){
+
+            this.select_cpu_ = true;
+            this.player1_selected_ = true;
+            this.tiempo_select_cpu_ = this.timestamp_() + 3000;
+
+        }else if (this.player1_selected_ && this.player2_selected_){
+            this.setup_();
+            this.empieza_();
+            this.empezado_ = true;
+            
+        }
+        
+    }
+    
+
+
+    this.setup_ = function() {
+
+        this.player_ = new Player(this, this.ancho_total_ + 20, 20, 800, 60000, 1, false, this.player1_tipo_);
+        var cpu = true;
+        var tipo2 = false;
+        if(this.modo_ == 2){
+            cpu = false;
+            tipo2 = this.player2_tipo_;
+        }
+        this.player2_ = new Player(this, this.ancho_total_ - 120, 20, 800, 60000, 2, cpu, tipo2);
+
+        cuerda = new Cuerda(this);
+
+    };
+
+
+
+
+
+    /***** LANZAAAAA ****/
+
+    this.modo_ = 1; // modo=1 -> 1player + modo=2 -> 2 players
+    this.level_ = 1; 
+
+    
+    this.p1 =  [
+        [ 1, 1, 1, 1,  ,  ,  , 1, 1],
+        [ 1, 1,  , 1,  ,  , 1, 1, 1],
+        [ 1, 1, 1, 1,  ,  ,  , 1, 1],
+        [ 1, 1,  ,  ,  ,  ,  , 1, 1],
+        [ 1, 1,  ,  ,  ,  ,  , 1, 1]
+    ];
+
+    this.p2 =  [
+        [ 1, 1, 1, 1,  ,  , 1, 1, 1],
+        [ 1, 1,  , 1,  ,  ,  ,  , 1],
+        [ 1, 1, 1, 1,  ,  , 1, 1, 1],
+        [ 1, 1,  ,  ,  ,  , 1,  ,  ],
+        [ 1, 1,  ,  ,  ,  , 1, 1, 1]
+    ];
+    this.cpu_ =  [
+        [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1,  , 1, 1],
+        [ 1, 1,  ,  ,  , 1, 1,  , 1,  , 1,  , 1, 1],
+        [ 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1,  , 1, 1],
+        [ 1, 1,  ,  ,  , 1, 1,  ,  ,  , 1,  , 1, 1],
+        [ 1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1]
+    ];
+
+    this.triangulin_ =  [
+        [ 1, 1, 1, 1, 1],
+        [  , 1, 1, 1,  ],
+        [  ,  , 1,  ,  ]
+    ];
+
+    this.flecha_der =  [
+            [  , 1,  ,  ],
+            [  , 1, 1,  ],
+            [ 1, 1, 1, 1],
+            [  , 1, 1,  ],
+            [  , 1,  ,  ]
+    ];
+    this.flecha_izq =  [
+            [  ,  , 1,  ],
+            [  , 1, 1,  ],
+            [ 1, 1, 1, 1],
+            [  , 1, 1,  ],
+            [  ,  , 1,  ]
+    ];
+    this.flecha_arr =  [
+            [  ,  , 1,  ,  ],
+            [  , 1, 1, 1,  ],
+            [ 1, 1, 1, 1, 1],
+            [  ,  , 1,  ,  ]
+    ];
+    this.flecha_abj_ =  [
+            [  ,  , 1,  ,  ],
+            [ 1, 1, 1, 1, 1],
+            [  , 1, 1, 1,  ],
+            [  ,  , 1,  ,  ]
+    ];
+
+
+    this.you_win_ =  [
+                    [ 1, 1,  , 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  ,  ,  , 1, 1,  , 1,  , 1,  , 1, 1,  , 1, 1,  ,  , 1,  ,  , 1,  , 1,  , 1,  ],
+                    [  , 1, 1, 1,  ,  , 1, 1,  , 1,  , 1, 1,  , 1,  ,  ,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1,  ,  , 1,  ,  , 1,  , 1,  , 1,  ],
+                    [  , 1, 1, 1,  ,  , 1, 1,  , 1,  , 1, 1,  , 1,  ,  ,  , 1, 1,  , 1,  , 1,  , 1, 1,  , 1, 1, 1,  , 1,  ,  , 1,  , 1,  , 1,  ],
+                    [  , 1, 1, 1,  ,  , 1, 1,  , 1,  , 1, 1,  , 1,  ,  ,  ,  , 1,  , 1,  , 1,  , 1, 1,  , 1, 1,  , 1, 1,  ,  ,  ,  ,  ,  ,  ,  ],
+                    [  , 1, 1, 1,  ,  , 1, 1, 1, 1,  , 1, 1, 1, 1,  ,  ,  ,  ,  , 1,  , 1,  ,  , 1, 1,  , 1, 1,  ,  , 1,  ,  , 1,  , 1,  , 1,  ]
+                ];
+
+
+    this.you_lost_ =  [
+            [ 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1, 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1],
+            [ 1, 1,  ,  ,  , 1, 1,  , 1,  , 1, 1, 1, 1,  , 1, 1,  ,  ,  ,  ,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1, 1,  ,  ,  , 1, 1,  , 1],
+            [ 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1, 1,  ,  ,  ,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1],
+            [ 1, 1,  , 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1, 1,  ,  ,  ,  ,  , 1, 1,  , 1,  ,  , 1,  , 1,  , 1, 1,  ,  ,  , 1, 1, 1,  ],
+            [ 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1,  , 1, 1, 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  ,  , 1,  ,  , 1, 1, 1, 1,  , 1, 1,  , 1]
+        ];
+
+    this.p1_win_ =  [
+            [ 1, 1, 1, 1,  ,  ,  ,  ,  , 1, 1,  ,  ,  ,  , 1, 1,  , 1,  , 1,  , 1, 1,  , 1, 1,  ,  , 1,  , 1, 1, 1, 1,  ,  , 1,  , 1,  ],
+            [ 1, 1,  , 1,  ,  ,  ,  , 1, 1, 1,  ,  ,  ,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1,  ,  , 1,  , 1, 1,  ,  ,  ,  , 1,  , 1,  ],
+            [ 1, 1,  , 1,  ,  ,  ,  ,  , 1, 1,  ,  ,  ,  , 1, 1,  , 1,  , 1,  , 1, 1,  , 1, 1, 1,  , 1,  , 1, 1, 1, 1,  ,  , 1,  , 1,  ],
+            [ 1, 1, 1, 1,  ,  ,  ,  ,  , 1, 1,  ,  ,  ,  ,  , 1,  , 1,  , 1,  , 1, 1,  , 1, 1,  , 1, 1,  ,  ,  , 1, 1,  ,  ,  ,  ,  ,  ],
+            [ 1, 1,  ,  ,  , 1,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  , 1,  , 1,  ,  , 1, 1,  , 1, 1,  ,  , 1,  , 1, 1, 1, 1,  ,  , 1,  , 1,  ]
+        ];
+
+
+    this.p2_win_  =  [
+            [ 1, 1, 1, 1,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  , 1, 1,  , 1,  , 1,  , 1, 1,  , 1, 1,  ,  , 1,  , 1, 1, 1, 1,  ,  , 1,  , 1,  ],
+            [ 1, 1,  , 1,  ,  ,  ,  ,  ,  , 1, 1,  ,  ,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1,  ,  , 1,  , 1, 1,  ,  ,  ,  , 1,  , 1,  ],
+            [ 1, 1,  , 1,  ,  ,  ,  , 1, 1, 1, 1,  ,  ,  , 1, 1,  , 1,  , 1,  , 1, 1,  , 1, 1, 1,  , 1,  , 1, 1, 1, 1,  ,  , 1,  , 1,  ],
+            [ 1, 1, 1, 1,  ,  ,  ,  , 1, 1,  ,  ,  ,  ,  ,  , 1,  , 1,  , 1,  , 1, 1,  , 1, 1,  , 1, 1,  ,  ,  , 1, 1,  ,  ,  ,  ,  ,  ],
+            [ 1, 1,  ,  ,  , 1,  ,  , 1, 1, 1, 1,  ,  ,  ,  ,  , 1,  , 1,  ,  , 1, 1,  , 1, 1,  ,  , 1,  , 1, 1, 1, 1,  ,  , 1,  , 1,  ]
+        ];
+
+
+    this.play_again_=  [           
+            [1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  , 1,  ,  , 1,  ,  ,  , 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1, 1,  ,  , 1],
+            [1, 1,  , 1,  , 1, 1,  ,  ,  , 1, 1,  , 1,  ,  , 1, 1,  ,  ,  ,  , 1, 1,  , 1,  , 1,  ,  ,  ,  , 1, 1,  , 1,  ,  ,  ,  , 1, 1, 1,  , 1],
+            [1, 1, 1, 1,  , 1, 1,  ,  ,  , 1, 1, 1, 1,  ,  , 1, 1,  ,  ,  ,  , 1, 1, 1, 1,  , 1,  , 1, 1,  , 1, 1, 1, 1,  , 1, 1,  , 1, 1,  , 1, 1],
+            [1, 1,  ,  ,  , 1, 1,  ,  ,  , 1, 1,  , 1,  ,  , 1, 1,  ,  ,  ,  , 1, 1,  , 1,  , 1,  ,  , 1,  , 1, 1,  , 1,  , 1, 1,  , 1, 1,  ,  , 1],
+            [1, 1,  ,  ,  , 1, 1, 1, 1,  , 1, 1,  , 1,  ,  , 1, 1,  ,  ,  ,  , 1, 1,  , 1,  , 1, 1, 1, 1,  , 1, 1,  , 1,  , 1, 1,  , 1, 1,  ,  , 1]
+    ];
+
+
+    this.ancho_selec_player_ = 370;
+    this.alto_selec_player_ = 140;
+
+    this.modo_seleccionado_ = false;
+
+    this.empezado_ = false; // controla cuando la partida ha empezado
+
+    this.pausa_ = false; // juego en pausa
+    this.is_game_over_ = false; //controla el findel juego
+
+    this.numero_jugadores_ = false;
+
+    this.player1_tipo_ = 1;
+    this.player2_tipo_ = 1;
+    this.player1_selected_ = false;
+    this.player2_selected_ = false;
+
+    /*
+    this.ancho_total_ = 840,
+    this.alto_total_  = 600,
+    */
+    if(w.innerWidth < 820){
+        this.ancho_total_ = w.innerWidth * 2,
+        this.alto_total_  = w.innerHeight * 2;
+
+    }
+    else{
+        this.ancho_total_ = w.innerWidth,
+        this.alto_total_  = w.innerHeight;
+    }
+
+    
+  
+    
+    this.ACCEL_    = 0.01,     // default take 1/2 second to reach maxdx (horizontal acceleration)
+    this.FRICTION_ = 0.001,     // default take 1/6 second to stop from maxdx (horizontal friction)
+    
+    this.COLOR_    = { BLACK_: '#000000', 
+                      YELLOW_: '#ECD078', 
+                      BRICK_: '#D95B43', 
+                      PINK_: '#C02942', 
+                      PURPLE_: '#542437', 
+                      BLUE_: '#0808b1', 
+                      GREY_: '#333', 
+                      SLATE_: '#53777A', 
+                      GOLD_: 'gold',
+                      RED_: '#ff0000' 
+                  },
+
+    this.colors_1_2_    = [],
+    this.colors_1_2_[1]    = "#cdcb11",
+    this.colors_1_2_[2]    = "#56248a",
+    this.player_colors_    = [],
+    /*
+    this.player_colors_[1]   = {
+        cabeza_: '#F5E5FC',
+        cuerpo_: '#8AE1FC',
+        pies_: '#48B8D0',
+    },
+    this.player_colors_[2]   = {
+        cabeza_: '#C1D7AE',
+        cuerpo_: '#8CC084',
+        pies_: '#968E85',
+    },
+    this.player_colors_[3]   = {
+        cabeza_: '#D89A9E',
+        cuerpo_: '#C37D92',
+        pies_: '#846267',
+    },
+    this.player_colors_[4]   = {
+        cabeza_: '#221100',
+        cuerpo_: '#EEDDCC',
+        pies_: '#EE1111',
+    },
+    */
+    this.player_colors_[1]   = {
+        cabeza_: '#f7cb60',
+        cuerpo_: '#6bfc64',
+        pies_: '#06b131',
+    },
+    this.player_colors_[2]   = {
+        cabeza_: '#ffffae',
+        cuerpo_: '#31deff',
+        pies_: '#2194e8',
+    },
+    this.player_colors_[4]   = {
+        cabeza_: '#4e3902',
+        cuerpo_: '#fd662d',
+        pies_: '#e8690c',
+    },
+    this.player_colors_[3]   = {
+        cabeza_: '#eab49b',
+        cuerpo_: '#eef347',
+        pies_: '#ffb604',
+    }
+   
+    this.KEY_      = { ENTER: 13, SHIFT: 16, LEFT: 37, UP: 38, RIGHT: 39, DOWN: 40, Z: 90, X: 88, R: 82, D: 68, F: 70, G: 71 },
+      
+    this.intensidad_shacke_ = 20;
+
+    this.fps_            = 60,
+    this.step_           = 1/this.fps_,
+    this.fpsInterval_     = 1000 / this.fps_;
+
+
+    this.canvas_         = document.getElementById('canvas'),
+    this.ctx_            = this.canvas_.getContext('2d'),
+    this.canvas_.width  = this.ancho_total_,
+    this.canvas_.height = this.alto_total_,
+    
+    
+    this.hay_muerte_      = false, //Aqui voy a controlar cuando se mate a alguien
+    
+
+    this.tiempo_shacke_ = this.timestamp_(),
+    this.tiempo_cuenta_atras_ = this.timestamp_(),
+    this.tiempo_select_cpu_ = this.timestamp_(),
+    this.ultimo_select_cpu_ = this.timestamp_(),
+    this.tiempo_siguiente_oponente_ = this.timestamp_(),
+    this.select_cpu_ = false,
+    
+    this.cuerda_ = [];  //puntos que ocupa la cuerda
+
+    this.marcador_size_ = 4,
+
+
+    this.ostiazos_ = [];
+    this.random_array_ = [];
+
+    for (i = 0; i < 1000; i++) {
+        var a = Math.floor(Math.random() * 2);
+        this.random_array_.push(a);
+    }
+
+    //Se muestra logo nada mas empezar
+    this.muestra_logo_(this.ctx_);
+
+
+};
+
+</script>
+        <script>
+(function() { // module pattern
+
+    /*
+    w.stats = new Stats();
+    stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+    document.body.appendChild( stats.dom );
+    */
+
+    w = window;
+
+    //instancia del juego
+    var juego = new Game();
+
+
+    juego.ancho_total_ = w.innerWidth;
+    juego.alto_total_  = w.innerHeight;
+
+    //instancia de movil para controlar sus cosas
+    var mobile = new Mobile(juego);
+    
+    //Muestro cosas para moviles
+    mobile.controla_if_mobile_();
+    mobile.mobile_listeners_();
+
+    //el bucle general del juego
+    var engine = new Engine(juego, mobile);
+
+    // MUSICA -> ojo, es la que lanza el juego, cuando esta ok! LOL
+    var musica = new Music(juego, mobile, engine);
+    musica.arranca_();
+
+
+    //MAPEAO KEY DOWN Y UPS
+    document.addEventListener('keydown', function(ev) { return juego.onkey_(ev, ev.keyCode, true);  }, false);
+    document.addEventListener('keyup',   function(ev) { return juego.onkey_(ev, ev.keyCode, false); }, false);
+
+
+    /* Control de salir de la pestana... para que pause el juego */
+    function handleVisibilityChange() {
+        if (document.hidden) {
+            juego.pausa_ = true;
+        } else  {
+            juego.pausa_ = false;
+        }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange, false);
+    /* Fin control de pestana actual */
+    document.getElementById('p_a').addEventListener('click', function(e){ 
+        location.reload();
+    });
+
+})();</script>
+        
+        <!-- 
+        <script src="prod/off_the_line.min.js"></script>
+            <script src="off_the_line.js?v=3"></script> -->
+
+    </body>
+</html>
